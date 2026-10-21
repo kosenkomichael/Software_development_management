@@ -2,11 +2,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir \
-    --trusted-host pypi.org \
-    --trusted-host files.pythonhosted.org \
-    -r requirements.txt
+RUN pip install --no-cache-dir poetry
+
+COPY pyproject.toml poetry.lock* ./
+
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --only main
 
 COPY . .
 
