@@ -23,8 +23,9 @@ class Settings(BaseSettings):
     minio_bucket: str = "lectures"
     minio_secure: bool = False
 
-    anthropic_api_key: str
-    llm_model: str = "claude-sonnet-4-6"
+    llm_api_key: str
+    llm_api_base: str = "https://token-plan.maas.qwencloudapi.com/compatible-mode/v1"
+    llm_model: str = "qwen3.8-flash"
     llm_max_tokens: int = 4096
 
     @property
