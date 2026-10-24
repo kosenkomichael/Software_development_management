@@ -30,4 +30,7 @@ class Material(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
     note: Mapped["Note"] = relationship("Note", back_populates="material", uselist=False)  # noqa: F821
+    images: Mapped[list["MaterialImage"]] = relationship(  # noqa: F821
+        "MaterialImage", back_populates="material", cascade="all, delete-orphan", order_by="MaterialImage.order"
+    )
     quizzes: Mapped[list["Quiz"]] = relationship("Quiz", back_populates="material")  # noqa: F821

@@ -13,12 +13,17 @@ class OpenAICompatibleClient(AbstractLLMClient):
         )
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-    async def complete(self, system: str, user: str) -> str:
+    async def complete(
+        self, system: str, user: str, file_parts: list[dict] | None = None
+    ) -> str:
+        content: str | list[dict] = user
+        if file_parts:
+            content = [*file_parts, {"type": "text", "text": user}]
         response = await self._client.chat.completions.create(
             model=settings.llm_model,
             messages=[
                 {"role": "system", "content": system},
-                {"role": "user", "content": user},
+                {"role": "user", "content": content},
             ],
             max_tokens=settings.llm_max_tokens,
         )

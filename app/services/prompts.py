@@ -4,10 +4,13 @@ Rules:
 - Use Markdown: ## for sections, ### for subsections, bullet points for details
 - Cover all key concepts, definitions, and examples from the source
 - Be thorough but concise — a student should be able to learn the topic from your notes
-- Write in the same language as the source material"""
+- Write in the same language as the source material
+- If the source contains images (you are told how many below), embed each one at the right place in the notes as a standalone line exactly of the form [IMAGE_N] where N is the image number from 1 to the stated count, numbered in document order. You may add a short caption on the line after the label. Do not skip, merge or renumber images."""
 
 NOTES_USER = """Create comprehensive structured study notes from the following lecture material:
 
+{images_note}
+Material:
 {text}"""
 
 QUIZ_SYSTEM = """You are an expert at creating educational assessment quizzes.

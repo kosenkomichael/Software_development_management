@@ -66,3 +66,41 @@ class StorageService:
     @staticmethod
     def max_size() -> int:
         return MAX_FILE_SIZE
+
+    _IMAGE_EXT_BY_MIME = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/gif": "gif",
+        "image/bmp": "bmp",
+        "image/webp": "webp",
+    }
+
+    def upload_image(self, data: bytes, material_id: str, order: int, mime: str) -> str:
+        ext = self._IMAGE_EXT_BY_MIME.get(mime, "bin")
+        s3_key = f"images/{material_id}/{order}.{ext}"
+        self._client.put_object(
+            self._bucket,
+            s3_key,
+            BytesIO(data),
+            length=len(data),
+            content_type=mime,
+        )
+        return s3_key
+
+    def get_image(self, s3_key: str) -> tuple[bytes, str]:
+        response = self._client.get_object(self._bucket, s3_key)
+        try:
+            data = response.read()
+            content_type = response.headers.get("Content-Type", "application/octet-stream")
+        finally:
+            response.close()
+            response.release_conn()
+        return data, content_type
+
+    def delete_prefix(self, prefix: str) -> None:
+        objects = self._client.list_objects(self._bucket, prefix=prefix, recursive=True)
+        for obj in objects:
+            try:
+                self._client.remove_object(self._bucket, obj.object_name)
+            except S3Error:
+                pass
