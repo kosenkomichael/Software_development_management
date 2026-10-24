@@ -1,15 +1,16 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import CurrentUser
 from app.db.session import get_session
-from app.models.material import Material, MaterialStatus
+from app.models.material import Material
 from app.models.quiz import QuizStatus
 from app.repositories.material_repository import MaterialRepository
+from app.repositories.material_image_repository import MaterialImageRepository
 from app.repositories.note_repository import NoteRepository
 from app.repositories.quiz_repository import QuizRepository
 from app.schemas.material import MaterialListResponse, MaterialResponse
@@ -60,7 +61,7 @@ async def upload_material(
     if not StorageService.allowed_content_type(file.content_type or ""):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail=f"Unsupported file type. Allowed: PDF, DOCX, PPTX",
+            detail="Unsupported file type. Allowed: PDF, DOCX, PPTX",
         )
 
     data = await file.read()
@@ -302,4 +303,28 @@ async def submit_quiz(
         total=len(results),
         correct=correct_count,
         results=results,
+    )
+
+
+@router.get("/{material_id}/images/{order}")
+async def get_material_image(
+    material_id: str,
+    order: int,
+    current_user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> Response:
+    mid = _parse_uuid(material_id)
+    material = await MaterialRepository(session).get_by_id(mid)
+    if material is None or material.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    img = await MaterialImageRepository(session).get_by_material_and_order(mid, order)
+    if img is None:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    data, mime = await run_in_threadpool(_storage.get_image, img.s3_key)
+    return Response(
+        content=data,
+        media_type=mime,
+        headers={"Cache-Control": "private, max-age=86400"},
     )

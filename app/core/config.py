@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     llm_api_base: str = "https://token-plan.maas.qwencloudapi.com/compatible-mode/v1"
     llm_model: str = "qwen3.8-flash"
     llm_max_tokens: int = 4096
+    max_images_per_request: int = 10
 
     @property
     def database_url(self) -> str:
