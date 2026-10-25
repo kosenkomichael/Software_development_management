@@ -1,13 +1,13 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import CurrentUser
 from app.db.session import get_session
-from app.models.material import Material
+from app.models.material import Material, MaterialStatus
 from app.models.quiz import QuizStatus
 from app.repositories.material_repository import MaterialRepository
 from app.repositories.material_image_repository import MaterialImageRepository
@@ -98,9 +98,14 @@ async def upload_material(
 async def list_materials(
     current_user: CurrentUser,
     session: Annotated[AsyncSession, Depends(get_session)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> MaterialListResponse:
-    materials = await MaterialRepository(session).list_by_user(current_user.id)
-    return MaterialListResponse(items=[_to_material_response(m) for m in materials], total=len(materials))
+    offset = (page - 1) * page_size
+    materials, total = await MaterialRepository(session).list_by_user_paginated(
+        current_user.id, limit=page_size, offset=offset
+    )
+    return MaterialListResponse(items=[_to_material_response(m) for m in materials], total=total)
 
 
 @router.get("/{material_id}", response_model=MaterialResponse)
@@ -161,6 +166,33 @@ async def get_notes(
         generation_time_ms=note.generation_time_ms,
         created_at=note.created_at,
     )
+
+
+@router.post("/{material_id}/notes/regenerate", response_model=NoteStatusResponse, status_code=202)
+async def regenerate_notes(
+    material_id: str,
+    current_user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> NoteStatusResponse:
+    mid = _parse_uuid(material_id)
+    material = await MaterialRepository(session).get_by_id(mid)
+    if material is None or material.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    if material.status == MaterialStatus.processing:
+        raise HTTPException(status_code=409, detail="Generation already in progress")
+
+    note = await NoteRepository(session).get_by_material(mid)
+    if note is not None:
+        await NoteRepository(session).delete(note)
+
+    material.status = MaterialStatus.uploaded
+    await session.commit()
+
+    from app.workers.tasks import generate_notes_task
+    generate_notes_task.delay(str(mid))
+
+    return NoteStatusResponse(material_id=material_id, status=MaterialStatus.uploaded, note_id=None)
 
 
 # ─── Quiz ─────────────────────────────────────────────────────────────────────
