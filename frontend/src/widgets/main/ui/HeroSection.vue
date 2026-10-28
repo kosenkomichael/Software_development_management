@@ -56,18 +56,18 @@ import { BaseButton } from '@/shared/ui/button'
 }
 
 .hero__content {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+  display: flex;
   align-items: center;
   gap: 64px;
 }
 
 .hero__information {
+  flex: 1 1 65%;
   min-width: 0;
 }
 
 .hero__title {
-  max-width: 650px;
+  max-width: 750px;
 }
 
 .hero__accent {
@@ -95,6 +95,8 @@ import { BaseButton } from '@/shared/ui/button'
   align-items: center;
   justify-content: center;
 
+  flex: 1 1 35%;
+  min-width: 0;
   min-height: 340px;
   padding: 24px;
 

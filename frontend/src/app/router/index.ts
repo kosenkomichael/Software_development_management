@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import MainLayout from '@/app/layouts/MainLayout.vue'
 import { MainPage } from '@/pages/main'
 
 const router = createRouter({
@@ -8,8 +9,14 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'main',
-      component: MainPage,
+      component: MainLayout,
+      children: [
+        {
+          path: '',
+          name: 'main',
+          component: MainPage,
+        },
+      ],
     },
   ],
 })
