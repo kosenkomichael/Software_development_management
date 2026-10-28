@@ -1,0 +1,26 @@
+:root {
+  /* Colors */
+  --color-dark: #191a25;
+  --color-white: #ffffff;
+  --color-yellow: #fed7a5;
+  --color-orange: #ab7b60;
+  --color-green: #41635f;
+
+  /* Semantic colors */
+  --color-background: var(--color-dark);
+  --color-text-primary: var(--color-white);
+  --color-text-secondary: #c8c5c5;
+  --color-text-thirdly: #fed7a5;
+
+  /* Layout */
+  --page-padding-inline: clamp(20px, 5vw, 64px);
+  --content-max-width: 1440px;
+
+  /* Border radius */
+  --border-radius-sm: 8px;
+  --border-radius-md: 20px;
+  --border-radius-lg: 60px;
+
+  /* Transitions */
+  --transition-default: 0.3s ease;
+}
