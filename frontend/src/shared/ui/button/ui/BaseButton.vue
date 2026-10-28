@@ -91,9 +91,10 @@ withDefaults(defineProps<Props>(), {
 /* Sizes */
 
 .base-button--small {
-  min-height: 40px;
+  min-height: 63px;
+  min-width: 127px;
   padding: 10px 18px;
-  font-size: 13px;
+  font-size: var(--font-size-text-2);
 }
 
 .base-button--medium {
