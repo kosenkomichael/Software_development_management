@@ -12,11 +12,14 @@
   --color-text-secondary: #c8c5c5;
   --color-text-thirdly: #fed7a5;
 
+  --color-border: rgba(255, 255, 255, 0.45);
+
   /* Border radius */
   --border-radius-sm: 8px;
   --border-radius-md: 20px;
   --border-radius-lg: 60px;
 
   /* Transitions */
+  --transition-fast: 0.15s ease;
   --transition-default: 0.3s ease;
 }

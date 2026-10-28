@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import { ArrowRight } from 'lucide-vue-next'
+
 import { BaseButton } from '@/shared/ui/button'
+
+import GenerationFlow from './hero/GenerationFlow.vue'
 </script>
 
 <template>
@@ -22,18 +26,7 @@ import { BaseButton } from '@/shared/ui/button'
               Загрузить материал
 
               <template #icon-right>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 12h14" />
-                  <path d="m12 5 7 7-7 7" />
-                </svg>
+                <ArrowRight :size="20" />
               </template>
             </BaseButton>
 
@@ -41,8 +34,8 @@ import { BaseButton } from '@/shared/ui/button'
           </div>
         </div>
 
-        <div class="hero__preview">
-          <span>Материал → Конспект + Тест</span>
+        <div class="hero__visual">
+          <GenerationFlow />
         </div>
       </div>
     </div>
@@ -52,58 +45,90 @@ import { BaseButton } from '@/shared/ui/button'
 <style scoped>
 .hero {
   width: 100%;
-  padding-block: 100px;
+  min-height: calc(100svh - 110px);
+  padding-block: 64px 100px;
 }
-
 .hero__content {
-  display: flex;
-  align-items: center;
-  gap: 64px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.87fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(32px, 3.4vw, 64px);
 }
-
-.hero__information {
-  flex: 1 1 65%;
+.hero__information,
+.hero__visual {
   min-width: 0;
 }
-
-.hero__title {
-  max-width: 750px;
+.hero__visual {
+  padding-top: 16px;
 }
-
+.hero__title {
+  font-size: clamp(36px, 3.2vw, 60px);
+  line-height: 1.22;
+}
 .hero__accent {
   color: var(--color-yellow);
 }
-
 .hero__description {
-  max-width: 500px;
-  margin-top: 24px;
-
-  color: var(--color-text-primary);
+  margin-top: 40px;
+  font-size: clamp(18px, 1.38vw, 26px);
+  line-height: 1.35;
 }
-
 .hero__actions {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-
-  margin-top: 32px;
+  gap: 32px;
+  margin-top: 48px;
 }
-
-.hero__preview {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  flex: 1 1 35%;
+.hero__actions :deep(.base-button) {
+  flex: 1;
   min-width: 0;
-  min-height: 340px;
-  padding: 24px;
-
-  border: 1px dashed var(--color-border);
-  border-radius: var(--border-radius-lg);
-
-  color: var(--color-text-secondary);
-  text-align: center;
+  width: auto;
+  padding-inline: 20px;
+}
+.hero__actions :deep(.base-button__icon svg) {
+  width: 32px;
+  height: 32px;
+}
+@media (max-width: 1400px) {
+  .hero__actions {
+    gap: 16px;
+  }
+  .hero__actions :deep(.base-button) {
+    font-size: 16px;
+  }
+}
+@media (max-width: 1100px) {
+  .hero {
+    padding-block: 48px 64px;
+  }
+  .hero__content {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  .hero__information {
+    max-width: 760px;
+  }
+  .hero__visual {
+    width: 100%;
+    max-width: 880px;
+    margin-inline: auto;
+    padding-top: 0;
+  }
+}
+@media (max-width: 600px) {
+  .hero__title {
+    font-size: 36px;
+  }
+  .hero__description {
+    margin-top: 24px;
+  }
+  .hero__actions {
+    flex-direction: column;
+    margin-top: 32px;
+  }
+  .hero__actions :deep(.base-button) {
+    flex: auto;
+    min-height: 60px;
+    height: auto;
+  }
 }
 </style>
