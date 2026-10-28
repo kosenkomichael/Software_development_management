@@ -1,4 +1,11 @@
 .container {
   width: 100%;
-  padding-inline: 6rem;
+  padding-left: clamp(20px, 6.1vw, 116px);
+  padding-right: clamp(20px, 2.9vw, 56px);
+}
+
+@media (max-width: 1100px) {
+  .container {
+    padding-inline: 20px;
+  }
 }

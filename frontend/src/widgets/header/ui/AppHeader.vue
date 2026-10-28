@@ -28,7 +28,7 @@ import logo from '@/shared/assets/images/logo.svg'
 
   width: 100%;
 
-  border-bottom: 1px solid var(--color-border);
+  background-color: #0000001d;
 }
 
 .header__container {
@@ -36,8 +36,6 @@ import logo from '@/shared/assets/images/logo.svg'
   align-items: center;
   justify-content: space-between;
   gap: 32px;
-  background-color: #0000001d;
-
   min-height: 110px;
 }
 
@@ -58,7 +56,32 @@ import logo from '@/shared/assets/images/logo.svg'
 .header__actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px;
   flex-shrink: 0;
+}
+
+.header__actions :deep(.base-button--yellow) {
+  min-width: 283px;
+}
+@media (max-width: 600px) {
+  .header__container {
+    min-height: 90px;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-block: 16px;
+  }
+  .header__logo {
+    height: 38px;
+  }
+  .header__actions {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .header__actions :deep(.base-button) {
+    min-width: 0;
+    min-height: 44px;
+    font-size: 14px;
+    padding-inline: 16px;
+  }
 }
 </style>
