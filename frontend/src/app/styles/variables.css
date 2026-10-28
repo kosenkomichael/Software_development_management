@@ -12,10 +12,6 @@
   --color-text-secondary: #c8c5c5;
   --color-text-thirdly: #fed7a5;
 
-  /* Layout */
-  --page-padding-inline: clamp(20px, 5vw, 64px);
-  --content-max-width: 1440px;
-
   /* Border radius */
   --border-radius-sm: 8px;
   --border-radius-md: 20px;
