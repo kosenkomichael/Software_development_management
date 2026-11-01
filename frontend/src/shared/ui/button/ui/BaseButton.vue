@@ -64,7 +64,6 @@ withDefaults(defineProps<Props>(), {
 
   font-family: var(--font-family-base);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.2;
 
   cursor: pointer;
 
@@ -91,21 +90,21 @@ withDefaults(defineProps<Props>(), {
 /* Sizes */
 
 .base-button--small {
-  min-height: 63px;
-  min-width: 127px;
-  padding: 10px 18px;
-  font-size: var(--font-size-text-2);
+  height: 50px;
+  min-width: 100px;
+  padding: 10px 25px;
+  font-size: var(--font-size-text-3);
 }
 
 .base-button--medium {
-  min-height: 46px;
+  min-height: 60px;
   padding: 12px 24px;
   font-size: 14px;
 }
 
 .base-button--large {
-  height: 81px;
-  width: 365px;
+  height: 70px;
+  min-width: 200px;
   padding: 14px 30px;
   font-size: var(--font-size-text-2);
 }

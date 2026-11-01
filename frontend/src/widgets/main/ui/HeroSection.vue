@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { ArrowRight } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+import { designAssets } from '@/shared/assets'
 
 import { BaseButton } from '@/shared/ui/button'
 
 import GenerationFlow from './hero/GenerationFlow.vue'
+const router = useRouter()
 </script>
 
 <template>
-  <section class="hero">
+  <section class="hero" :style="{ backgroundImage: `url(${designAssets.heroBackground})` }">
     <div class="container">
       <div class="hero__content">
         <div class="hero__information">
@@ -16,13 +19,13 @@ import GenerationFlow from './hero/GenerationFlow.vue'
             <span class="hero__accent"> за несколько минут </span>
           </h1>
 
-          <p class="text-3 hero__description">
+          <p class="text-1 hero__description">
             Загрузите учебный материал — мы выделим главное, создадим структурированный конспект и
             подготовим тест для самопроверки
           </p>
 
           <div class="hero__actions">
-            <BaseButton variant="yellow" size="large">
+            <BaseButton variant="yellow" size="large" @click="router.push('/materials/new')">
               Загрузить материал
 
               <template #icon-right>
@@ -30,7 +33,13 @@ import GenerationFlow from './hero/GenerationFlow.vue'
               </template>
             </BaseButton>
 
-            <BaseButton variant="transparent" size="large"> Посмотреть возможности </BaseButton>
+            <BaseButton
+              variant="transparent"
+              size="large"
+              @click="router.push({ path: '/', hash: '#how-it-works' })"
+            >
+              Посмотреть возможности
+            </BaseButton>
           </div>
         </div>
 
@@ -44,46 +53,64 @@ import GenerationFlow from './hero/GenerationFlow.vue'
 
 <style scoped>
 .hero {
+  position: relative;
+  isolation: isolate;
   width: 100%;
-  min-height: calc(100svh - 110px);
-  padding-block: 64px 100px;
+  min-height: 884px;
+  padding-block: calc(110px + 58px) 140px;
+  background-size: 119.47% 141.56%;
+  background-position: right top -172px;
+  background-repeat: no-repeat;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 240px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--color-background) 50%, transparent) 50%,
+    var(--color-background)
+  );
+  pointer-events: none;
+  z-index: -1;
 }
 .hero__content {
-  display: grid;
-  grid-template-columns: minmax(0, 0.87fr) minmax(0, 1fr);
+  display: flex;
   align-items: start;
   gap: clamp(32px, 3.4vw, 64px);
 }
 .hero__information,
 .hero__visual {
   min-width: 0;
+  flex: 1;
 }
 .hero__visual {
   padding-top: 16px;
+  margin-right: 44px;
+}
+.hero__information {
+  flex: 0.87;
 }
 .hero__title {
-  font-size: clamp(36px, 3.2vw, 60px);
+  font-size: var(--font-size-title-1);
   line-height: 1.22;
+  font-weight: var(--font-weight-semibold);
 }
 .hero__accent {
   color: var(--color-yellow);
 }
 .hero__description {
   margin-top: 40px;
-  font-size: clamp(18px, 1.38vw, 26px);
-  line-height: 1.35;
+  line-height: 1.4;
 }
 .hero__actions {
   display: flex;
-  gap: 32px;
+  gap: 30px;
   margin-top: 48px;
 }
-.hero__actions :deep(.base-button) {
-  flex: 1;
-  min-width: 0;
-  width: auto;
-  padding-inline: 20px;
-}
+
 .hero__actions :deep(.base-button__icon svg) {
   width: 32px;
   height: 32px;
@@ -98,10 +125,10 @@ import GenerationFlow from './hero/GenerationFlow.vue'
 }
 @media (max-width: 1100px) {
   .hero {
-    padding-block: 48px 64px;
+    padding-block: calc(110px + 48px) 64px;
   }
   .hero__content {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: 48px;
   }
   .hero__information {
@@ -115,6 +142,9 @@ import GenerationFlow from './hero/GenerationFlow.vue'
   }
 }
 @media (max-width: 600px) {
+  .hero {
+    padding-top: calc(142px + 48px);
+  }
   .hero__title {
     font-size: 36px;
   }

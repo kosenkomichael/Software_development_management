@@ -32,8 +32,8 @@ defineProps<Props>()
   width: 100%;
   min-height: 128px;
   padding: 24px;
-  background-color: rgba(48, 45, 50, 0.85);
-  border: 2px solid rgba(255, 255, 255, 0.08);
+  background-color: var(--color-glass);
+  border: 2px solid var(--color-glass-border);
   border-radius: 30px;
   backdrop-filter: blur(12px);
 }
@@ -52,13 +52,13 @@ defineProps<Props>()
 .material-card__name {
   overflow: hidden;
   color: var(--color-text-primary);
-  font-size: 20px;
+  font-size: var(--font-size-text-2);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .material-card__details {
   color: var(--color-text-secondary);
-  font-size: 20px;
+  font-size: var(--font-size-text-2);
 }
 @media (max-width: 1400px) {
   .material-card {
