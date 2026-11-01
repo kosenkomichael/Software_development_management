@@ -248,6 +248,10 @@ onBeforeUnmount(stop)
           class="quiz-panel__option text-2"
           :class="{
             'quiz-panel__option--correct': questionResult?.correct_ids.includes(option.id),
+            'quiz-panel__option--wrong':
+              !!questionResult &&
+              answers[question.id]?.includes(option.id) &&
+              !questionResult.correct_ids.includes(option.id),
           }"
           ><input
             :type="question.question_type === 'multiple' ? 'checkbox' : 'radio'"
@@ -331,14 +335,57 @@ onBeforeUnmount(stop)
   cursor: pointer;
 }
 .quiz-panel__option input {
+  appearance: none;
+  flex-shrink: 0;
+  display: grid;
+  place-content: center;
   width: 22px;
   height: 22px;
-  accent-color: var(--color-yellow);
-  flex-shrink: 0;
+  margin: 0;
+  border: 1.5px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.quiz-panel__option input:focus-visible {
+  outline: 2px solid var(--color-yellow);
+  outline-offset: 2px;
+}
+.quiz-panel__option input[type='radio'] {
+  border-radius: 50%;
+}
+.quiz-panel__option input:checked {
+  border-color: var(--color-yellow);
+  background: var(--color-yellow);
+}
+.quiz-panel__option input:checked::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  background: var(--color-dark);
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+.quiz-panel__option input[type='radio']:checked::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  clip-path: none;
 }
 .quiz-panel__option--correct {
   border-color: var(--color-success);
   background: color-mix(in srgb, var(--color-green) 30%, transparent);
+}
+.quiz-panel__option--wrong {
+  border-color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 18%, transparent);
+}
+.quiz-panel__option--correct input:checked {
+  border-color: var(--color-success);
+  background: var(--color-success);
+}
+.quiz-panel__option--wrong input:checked {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
 }
 .quiz-panel__score {
   display: flex;

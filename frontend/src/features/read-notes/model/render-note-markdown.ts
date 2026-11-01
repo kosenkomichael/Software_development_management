@@ -33,13 +33,41 @@ function plainText(tokens: Token[]): string {
     .join('')
 }
 
+const MATH_HEAD = '\uE000'
+const MATH_TAIL = '\uE001'
+const PLACEHOLDER_RE = /\uE000(\d+)\uE001/g
+
+function protectMath(source: string) {
+  const store: string[] = []
+  const stash = (raw: string) => {
+    store.push(raw)
+    return `${MATH_HEAD}${store.length - 1}${MATH_TAIL}`
+  }
+  const protectedSource = source
+    .split(/(```[\s\S]*?```|~~~[\s\S]*?~~~)/g)
+    .map((part, index) => {
+      if (index % 2 === 1) return part
+      return part
+        .replace(/\$\$([\s\S]+?)\$\$/g, (_, body: string) => stash(`$$${body}$$`))
+        .replace(/\$([^$\n]+?)\$/g, (_, body: string) => stash(`$${body}$`))
+        .replace(/\\\(([\s\S]+?)\\\)/g, (_, body: string) => stash(`$${body}$`))
+        .replace(/\\\[([\s\S]+?)\\\]/g, (_, body: string) => stash(`$$${body}$$`))
+    })
+    .join('')
+  return { protectedSource, store }
+}
+
 export function renderNoteMarkdown(source: string, options: RenderOptions) {
   const headings: NoteHeading[] = []
   const imageOrders = new Set<number>()
   const slugs = new Map<string, number>()
+  const { protectedSource, store } = protectMath(source)
   const renderer = new Renderer()
   renderer.heading = function ({ tokens, depth }) {
-    const title = plainText(tokens)
+    const title = plainText(tokens).replace(
+      PLACEHOLDER_RE,
+      (_, i: string) => (store[Number(i)] ?? '').replace(/^\$+|\$+$/g, '')
+    )
     const slug =
       title
         .toLowerCase()
@@ -79,7 +107,8 @@ export function renderNoteMarkdown(source: string, options: RenderOptions) {
   renderer.checkbox = ({ checked }) =>
     `<span class="note-checkbox" aria-label="${checked ? 'Выполнено' : 'Не выполнено'}">${checked ? '☑' : '☐'}</span> `
   const parser = new Marked({ gfm: true, breaks: false, async: false, renderer })
-  let rendered = parser.parse(source, { async: false })
+  let rendered = parser.parse(protectedSource, { async: false })
+  rendered = rendered.replace(PLACEHOLDER_RE, (_, i: string) => escapeHtml(store[Number(i)] ?? ''))
   if (!headings.length) {
     const id = `${options.prefix}-intro`
     headings.push({ id, title: 'Конспект', depth: 1 })
