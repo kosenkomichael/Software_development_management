@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1370" height="715" viewBox="0 0 1370 715" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 123">
+<g id="Rectangle 39">
+<path d="M0 20C0 8.95432 8.95431 0 20 0H1350C1361.05 0 1370 8.9543 1370 20V695C1370 706.046 1361.05 715 1350 715H20C8.95432 715 0 706.046 0 695V20Z" fill="#20212B"/>
+<mask id="stroke0_0_14" fill="white">
+<path d="M0 20C0 8.95432 8.95431 0 20 0H1350C1361.05 0 1370 8.9543 1370 20V695C1370 706.046 1361.05 715 1350 715H20C8.95432 715 0 706.046 0 695V20Z"/>
+</mask>
+<path d="M20 715H1350C1361.05 715 1370 706.046 1370 695V20C1370 8.95431 1361.05 0 1350 0H20C8.95431 0 0 8.95432 0 20V695C0 706.046 8.95432 715 20 715Z" stroke-width="4" stroke="#2C2D3C" mask="url(#stroke0_0_14)"/>
+</g>
+</g>
+</svg>

@@ -42,6 +42,7 @@ defineProps<Props>()
       size="small"
       full-width
       class="result-card__button"
+      disabled
     >
       {{ buttonText }}
 
@@ -59,8 +60,8 @@ defineProps<Props>()
   min-width: 0;
   min-height: 357px;
   padding: 34px 32px 22px;
-  background-color: rgba(48, 45, 50, 0.78);
-  border: 2px solid rgba(255, 255, 255, 0.08);
+  background-color: var(--color-glass);
+  border: 2px solid var(--color-glass-border);
   border-radius: 30px;
   backdrop-filter: blur(12px);
 }
@@ -70,8 +71,9 @@ defineProps<Props>()
   gap: 24px;
 }
 .result-card__icon {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   width: 76px;
   height: 76px;
@@ -89,7 +91,7 @@ defineProps<Props>()
   background-color: var(--color-orange);
 }
 .result-card__title {
-  font-size: 25px;
+  font-size: var(--font-size-text-1);
   line-height: 1.3;
   color: var(--color-text-primary);
 }
@@ -105,7 +107,7 @@ defineProps<Props>()
   display: flex;
   align-items: flex-start;
   gap: 18px;
-  font-size: 20px;
+  font-size: var(--font-size-text-2);
   line-height: 1.4;
   color: var(--color-text-secondary);
 }
@@ -124,6 +126,10 @@ defineProps<Props>()
 .result-card__button :deep(.base-button__icon svg) {
   width: 30px;
   height: 30px;
+}
+.result-card .result-card__button:disabled {
+  opacity: 1;
+  cursor: default;
 }
 @media (max-width: 1600px) {
   .result-card {

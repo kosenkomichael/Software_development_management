@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { CircleUserRound } from 'lucide-vue-next'
+import { useAuthModalStore } from '@/features/auth'
+import { useSessionStore } from '@/entities/session'
 
 import { BaseButton } from '@/shared/ui/button'
 import logo from '@/shared/assets/images/logo.svg'
+
+const authModal = useAuthModalStore()
+const session = useSessionStore()
 </script>
 
 <template>
@@ -13,22 +19,75 @@ import logo from '@/shared/assets/images/logo.svg'
       </RouterLink>
 
       <div class="header__actions">
-        <BaseButton variant="transparent" size="small"> Войти </BaseButton>
+        <RouterLink
+          v-if="session.isAuthenticated"
+          to="/account"
+          class="text-link text-3 header__account"
+          aria-label="Личный кабинет"
+          title="Личный кабинет"
+        >
+          <CircleUserRound :size="28" aria-hidden="true" />
+          <span>Личный кабинет</span>
+        </RouterLink>
+        <template v-if="session.isAuthenticated">
+          <BaseButton
+            variant="transparent"
+            size="small"
+            :loading="session.isPending"
+            @click="session.logout"
+            >Выйти</BaseButton
+          >
+        </template>
+        <template v-else>
+          <BaseButton
+            variant="transparent"
+            size="small"
+            aria-haspopup="dialog"
+            :disabled="session.isInitializing || session.isPending"
+            @click="authModal.open('login')"
+          >
+            Войти
+          </BaseButton>
 
-        <BaseButton variant="yellow" size="small"> Зарегистрироваться </BaseButton>
+          <BaseButton
+            variant="yellow"
+            size="small"
+            aria-haspopup="dialog"
+            :disabled="session.isInitializing || session.isPending"
+            @click="authModal.open('register')"
+          >
+            Зарегистрироваться
+          </BaseButton>
+        </template>
       </div>
+    </div>
+    <div v-if="session.sessionError" class="container header__status text-4" role="alert">
+      <p>{{ session.sessionError }}</p>
+      <button
+        type="button"
+        :disabled="session.isInitializing || session.isPending"
+        @click="session.initialize"
+      >
+        Повторить
+      </button>
     </div>
   </header>
 </template>
 
 <style scoped>
 .header {
-  position: relative;
-  z-index: 10;
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
 
   width: 100%;
 
-  background-color: #0000001d;
+  background: linear-gradient(
+    to bottom,
+    var(--color-header-background) 0%,
+    color-mix(in srgb, var(--color-background) 50%, transparent) 55%,
+    transparent 100%
+  );
 }
 
 .header__container {
@@ -36,7 +95,7 @@ import logo from '@/shared/assets/images/logo.svg'
   align-items: center;
   justify-content: space-between;
   gap: 32px;
-  min-height: 110px;
+  min-height: var(--header-height);
 }
 
 .header__logo-link {
@@ -59,10 +118,27 @@ import logo from '@/shared/assets/images/logo.svg'
   gap: 20px;
   flex-shrink: 0;
 }
-
-.header__actions :deep(.base-button--yellow) {
-  min-width: 283px;
+.header__account {
+  white-space: nowrap;
 }
+.header__account svg {
+  flex-shrink: 0;
+}
+.header__status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-block: 8px;
+  color: var(--color-yellow);
+}
+.header__status button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+}
+
 @media (max-width: 600px) {
   .header__container {
     min-height: 90px;
