@@ -17,7 +17,6 @@ class QuizStatus(str, enum.Enum):
 class QuestionType(str, enum.Enum):
     single = "single"
     multiple = "multiple"
-    open = "open"
 
 
 class Quiz(UUIDPrimaryKeyMixin, TimestampMixin, Base):

@@ -19,6 +19,8 @@ from app.services.storage_service import StorageService
 from app.services.text_extractor import extract_images, extract_text
 
 _IMAGE_N_RE = re.compile(r"\[IMAGE_(\d+)\]")
+_MATH_INLINE_RE = re.compile(r"\\\((.+?)\\\)", re.DOTALL)
+_MATH_BLOCK_RE = re.compile(r"\\\[(.+?)\\\]", re.DOTALL)
 
 
 class NotesService:
@@ -97,7 +99,7 @@ class NotesService:
             )
             elapsed_ms = int((time.monotonic() - t0) * 1000)
 
-            content = _substitute_images(content, material_id, len(images))
+            content = _normalize_math(_substitute_images(content, material_id, len(images)))
 
             note = Note(
                 material_id=material_id,
@@ -131,12 +133,18 @@ class NotesService:
             return response.content
 
 
+def _normalize_math(content: str) -> str:
+    """Convert \\(..\\)/\\[..\\] LaTeX delimiters to $../$$..$ for the frontend renderer."""
+    content = _MATH_BLOCK_RE.sub(r"$$\1$$", content)
+    return _MATH_INLINE_RE.sub(r"$\1$", content)
+
+
 def _substitute_images(content: str, material_id: UUID, image_count: int) -> str:
-    """Replace [IMAGE_N] labels with markdown links to the image endpoint."""
+    """Replace [IMAGE_N] labels with markdown links; drop labels without a stored image."""
     def _repl(match: re.Match[str]) -> str:
         n = int(match.group(1))
         if not 1 <= n <= image_count:
-            return match.group(0)
+            return ""
         return f"![Рисунок {n}](/api/v1/materials/{material_id}/images/{n})"
 
     return _IMAGE_N_RE.sub(_repl, content)

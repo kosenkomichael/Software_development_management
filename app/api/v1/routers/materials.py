@@ -304,15 +304,6 @@ async def submit_quiz(
             continue
 
         correct_ids = [str(a.id) for a in question.answers if a.is_correct]
-
-        if question.question_type.value == "open":
-            results.append(QuestionResult(
-                question_id=submitted.question_id,
-                is_correct=None,
-                correct_ids=[],
-            ))
-            continue
-
         is_correct = set(submitted.selected_ids) == set(correct_ids)
         if is_correct:
             correct_count += 1
@@ -327,8 +318,7 @@ async def submit_quiz(
             explanation=explanation,
         ))
 
-    scorable = sum(1 for r in results if r.is_correct is not None)
-    score = round(correct_count / scorable, 2) if scorable else 0.0
+    score = round(correct_count / len(results), 2) if results else 0.0
 
     return SubmitResponse(
         score=score,

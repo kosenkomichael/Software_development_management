@@ -26,7 +26,6 @@ const filters = computed(() => [
     count: library.items.filter((item) => item.status === 'done').length,
   },
   { id: 'quiz', label: 'Тесты', count: Object.values(library.quizReady).filter(Boolean).length },
-  { id: 'files', label: 'Лекции', count: library.total },
 ])
 const visible = computed(() =>
   library.items
@@ -130,7 +129,7 @@ function open(item: Material, tab?: string) {
       <FilePlus :size="48" />
       <h2 class="title-4">
         {{
-          filter === 'all' || filter === 'files'
+          filter === 'all'
             ? 'Здесь будут ваши материалы'
             : 'Таких материалов пока нет'
         }}
@@ -149,7 +148,6 @@ function open(item: Material, tab?: string) {
         v-for="item in visible"
         :key="item.id"
         :material="item"
-        :quiz-ready="library.quizReady[item.id]"
         @open="open(item)"
         @quiz="open(item, 'quiz')"
         @details="selected = item"

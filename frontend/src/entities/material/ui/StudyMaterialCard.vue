@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { FileText, MoreHorizontal, Heart } from 'lucide-vue-next'
-import { designAssets } from '@/shared/assets'
 import { materialStatusLabel, formatSize, type Material } from '../model/types'
-defineProps<{ material: Material; quizReady?: boolean; demo?: boolean; author?: string }>()
+defineProps<{ material: Material; demo?: boolean; author?: string }>()
 defineEmits<{ open: []; quiz: []; details: [] }>()
 </script>
 
@@ -41,9 +40,6 @@ defineEmits<{ open: []; quiz: []; details: [] }>()
         @click="$emit('open')"
       >
         Конспект
-        <span :style="{ backgroundImage: `url(${designAssets.countCircle})` }">{{
-          material.status === 'done' ? 1 : 0
-        }}</span>
       </button>
       <button
         class="study-card__pill study-card__pill--quiz text-3"
@@ -51,9 +47,6 @@ defineEmits<{ open: []; quiz: []; details: [] }>()
         @click="$emit('quiz')"
       >
         Тест
-        <span :style="{ backgroundImage: `url(${designAssets.countCircle})` }">{{
-          quizReady === undefined ? '—' : quizReady ? 1 : 0
-        }}</span>
       </button>
       <FileText
         v-if="material.status === 'processing'"
@@ -114,15 +107,5 @@ defineEmits<{ open: []; quiz: []; details: [] }>()
 }
 .study-card__pill--quiz {
   background: var(--color-green);
-}
-.study-card__pill span {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 29px;
-  height: 29px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  font-size: var(--font-size-text-4);
 }
 </style>

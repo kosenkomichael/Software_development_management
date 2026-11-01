@@ -30,7 +30,7 @@ export interface QuizAnswer {
 export interface QuizQuestion {
   id: string
   text: string
-  question_type: 'single' | 'multiple' | 'open'
+  question_type: 'single' | 'multiple'
   order: number
   answers: QuizAnswer[]
 }
@@ -48,7 +48,6 @@ export interface QuizStatus {
 export interface SubmittedAnswer {
   question_id: string
   selected_ids: string[]
-  open_answer?: string
 }
 export interface QuizResult {
   score: number
@@ -56,7 +55,7 @@ export interface QuizResult {
   correct: number
   results: {
     question_id: string
-    is_correct: boolean | null
+    is_correct: boolean
     correct_ids: string[]
     explanation?: string | null
   }[]
