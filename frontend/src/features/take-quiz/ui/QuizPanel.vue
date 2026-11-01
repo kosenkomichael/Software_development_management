@@ -20,7 +20,6 @@ const api = createMaterialApi(useSessionStore().request)
 const quiz = ref<Quiz | null>(null)
 const current = ref(0)
 const answers = ref<Record<string, string[]>>({})
-const openAnswers = ref<Record<string, string>>({})
 const result = ref<QuizResult | null>(null)
 const loading = ref(false)
 const processing = ref(false)
@@ -38,10 +37,7 @@ function stop() {
   controller.abort()
 }
 function answered(id: string) {
-  const item = quiz.value?.questions.find((q) => q.id === id)
-  return item?.question_type === 'open'
-    ? !!openAnswers.value[id]?.trim()
-    : !!answers.value[id]?.length
+  return !!answers.value[id]?.length
 }
 function select(answerId: string, checked: boolean) {
   const item = question.value
@@ -60,7 +56,6 @@ function selectQuestion(index: number) {
 function restart() {
   result.value = null
   answers.value = {}
-  openAnswers.value = {}
   selectQuestion(0)
 }
 function schedule(signal: AbortSignal) {
@@ -132,7 +127,6 @@ async function submit() {
   const submitted: SubmittedAnswer[] = quiz.value.questions.map((item) => ({
     question_id: item.id,
     selected_ids: answers.value[item.id] ?? [],
-    open_answer: openAnswers.value[item.id],
   }))
   try {
     if (props.demo) {
@@ -173,7 +167,6 @@ watch(
     quiz.value = props.demo ?? props.initialQuiz ?? null
     result.value = null
     answers.value = {}
-    openAnswers.value = {}
     processing.value = !!props.generationPending
     submitting.value = false
     deadline = Date.now() + 10 * 60 * 1000
@@ -221,7 +214,6 @@ onBeforeUnmount(stop)
           <p class="text-3">
             Правильных ответов: {{ result.correct }}. Отправлено вопросов: {{ result.total }}.
           </p>
-          <p class="text-4 muted">Открытые ответы не оцениваются автоматически.</p>
         </div>
       </div>
       <nav class="quiz-panel__numbers" aria-label="Вопросы теста">
@@ -244,9 +236,7 @@ onBeforeUnmount(stop)
         {{
           question.question_type === 'multiple'
             ? 'Выберите несколько ответов'
-            : question.question_type === 'open'
-              ? 'Введите ответ'
-              : 'Выберите один ответ'
+            : 'Выберите один ответ'
         }}
       </p>
       <h3 class="title-4">{{ question.text }}</h3>
@@ -265,13 +255,7 @@ onBeforeUnmount(stop)
             :checked="answers[question.id]?.includes(option.id)"
             @change="select(option.id, ($event.target as HTMLInputElement).checked)"
           />{{ option.text }}</label
-        ><textarea
-          v-if="question.question_type === 'open'"
-          v-model="openAnswers[question.id]"
-          class="app-input text-2"
-          aria-label="Ваш ответ"
-          rows="5"
-        />
+        >
       </fieldset>
       <p v-if="questionResult?.explanation" class="notice text-2">
         {{ questionResult.explanation }}

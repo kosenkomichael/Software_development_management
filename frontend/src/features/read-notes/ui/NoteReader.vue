@@ -5,6 +5,8 @@ import { BaseButton } from '@/shared/ui/button'
 import { useSessionStore } from '@/entities/session'
 import { createMaterialApi } from '@/entities/material'
 import { renderNoteMarkdown } from '../model/render-note-markdown'
+import renderMathInElement from 'katex/contrib/auto-render'
+import 'katex/dist/katex.min.css'
 
 const props = defineProps<{
   content: string
@@ -141,9 +143,19 @@ watch(
   () => markdown.value.html,
   async () => {
     await nextTick()
+    if (article.value)
+      renderMathInElement(article.value, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\(', right: '\\)', display: false },
+          { left: '\\[', right: '\\]', display: true },
+        ],
+        throwOnError: false,
+      })
     bindHeadings()
   },
-  { flush: 'post' }
+  { flush: 'post', immediate: true }
 )
 onMounted(() => {
   if (typeof ResizeObserver !== 'undefined') observer = new ResizeObserver(onScroll)
@@ -235,7 +247,7 @@ function download() {
   align-items: stretch;
   gap: 0;
   padding: 0;
-  min-height: 640px;
+  min-height: 400px;
   border-width: 1px;
 }
 .note-reader__navigation {
@@ -314,7 +326,7 @@ function download() {
 .note-reader__content {
   flex: 1;
   min-width: 0;
-  max-height: 850px;
+  max-height: calc(100svh - 180px);
   overflow: auto;
   padding: 24px 28px;
   border-left: 1px solid var(--color-panel-border);
@@ -326,10 +338,6 @@ function download() {
     color-mix(in srgb, var(--color-panel) 85%, transparent),
     color-mix(in srgb, var(--color-background) 94%, transparent)
   );
-}
-.note-reader--detailed .note-reader__content {
-  max-height: none;
-  overflow: visible;
 }
 .note-reader--collapsed .note-reader__navigation {
   flex-basis: 60px;

@@ -8,8 +8,14 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 export default defineConfig({
   plugins: [vue(), vueDevTools()],
   server: {
+    host: true,
+    port: 5173,
+    watch: { usePolling: !!process.env.VITE_WATCH_POLLING },
     proxy: {
-      '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true },
+      '/api': {
+        target: process.env.VITE_PROXY_TARGET || 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
     },
   },
   resolve: {

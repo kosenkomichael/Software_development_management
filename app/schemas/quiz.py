@@ -45,7 +45,6 @@ class QuizStatusResponse(BaseModel):
 class SubmitAnswerItem(BaseModel):
     question_id: str
     selected_ids: list[str] = []
-    open_answer: str | None = None
 
 
 class SubmitRequest(BaseModel):
@@ -54,7 +53,7 @@ class SubmitRequest(BaseModel):
 
 class QuestionResult(BaseModel):
     question_id: str
-    is_correct: bool | None
+    is_correct: bool
     correct_ids: list[str]
     explanation: str | None = None
 

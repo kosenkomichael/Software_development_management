@@ -1,7 +1,7 @@
 import json
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.quiz import Answer, Question, QuestionType, Quiz, QuizStatus
@@ -26,6 +26,20 @@ class _QuestionSchema(BaseModel):
 
 class _QuizSchema(BaseModel):
     questions: list[_QuestionSchema]
+
+    @model_validator(mode="after")
+    def _check_quiz(self) -> "_QuizSchema":
+        if len(self.questions) != 10:
+            raise ValueError("Quiz must contain exactly 10 questions")
+        for q in self.questions:
+            correct = sum(1 for a in q.answers if a.is_correct)
+            if q.type == QuestionType.single:
+                if len(q.answers) < 2 or correct != 1:
+                    raise ValueError("Single-choice question needs 2+ answers, exactly 1 correct")
+            else:
+                if len(q.answers) < 3 or correct not in (2, 3):
+                    raise ValueError("Multiple-choice question needs 3+ answers and 2-3 correct")
+        return self
 
 
 class QuizService:

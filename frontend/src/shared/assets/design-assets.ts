@@ -1,12 +1,10 @@
 import heroBackground from './images/figma/a8e72.png'
-import resultPreview from './images/figma/b40a7.png'
 import ctaBackground from './images/figma/afb95.png'
 import uploadBackground from './images/figma/4164f.png'
 import arrowLeft from './images/figma/2b524.svg'
 import arrowRight from './images/figma/93feb.svg'
 import sourcePlus from './images/figma/cfd7a.svg'
 import stepIcon from './images/figma/3b07d.svg'
-import countCircle from './images/figma/b60e9.svg'
 import avatar from './images/figma/575cb.svg'
 import sidebarLine from './images/figma/f8477.svg'
 import quotaTrack from './images/figma/c5c8b.svg'
@@ -24,14 +22,12 @@ import editAvatar from './images/figma/e6f6f.svg'
 
 export const designAssets = {
   heroBackground,
-  resultPreview,
   ctaBackground,
   uploadBackground,
   arrowLeft,
   arrowRight,
   sourcePlus,
   stepIcon,
-  countCircle,
   avatar,
   sidebarLine,
   quotaTrack,

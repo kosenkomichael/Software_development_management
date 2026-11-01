@@ -32,7 +32,6 @@ function showExample(index = 0) {
         :key="item.id"
         :material="item"
         demo
-        :quiz-ready="true"
         author="Демонстрационный материал"
         @open="showExample()"
         @quiz="showExample(1)"
