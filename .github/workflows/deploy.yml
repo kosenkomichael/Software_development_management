@@ -53,15 +53,13 @@ jobs:
           rm -f "$tmp"
 
           if ! sudo wg-quick up wg0 >/dev/null 2>/tmp/wg-up.err; then
-            echo "wg-quick up failed (details redacted)"
-            sed -E 's/^([A-Za-z]+[[:space:]]*=[[:space:]]*).*/\1<REDACTED>/' /tmp/wg-up.err || true
+            echo "wg-quick up failed"
+            sed -E 's/=[^[:space:]]*/=<REDACTED>/g' /tmp/wg-up.err || true
             exit 1
           fi
-          
-          sudo wg show wg0 public-key
-          sudo wg show wg0 peers
-          sudo wg show wg0 endpoints
-          sudo wg show wg0 latest-handshakes
+
+          sudo wg show wg0 >/dev/null
+          echo "WireGuard: up"
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
