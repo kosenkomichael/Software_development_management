@@ -27,7 +27,6 @@ trap 'rm -f "$tmp"' EXIT
 } > "$tmp"
 chmod 600 "$tmp"
 sudo install -m 600 -o root -g root "$tmp" /etc/wireguard/wg0.conf
-rm -f "$tmp"
 
 if ! sudo wg-quick up wg0 >/dev/null 2>/tmp/wg-up.err; then
   echo "wg-quick up failed"
