@@ -36,7 +36,7 @@ jobs:
           sudo apt-get install -y -qq wireguard-tools
           sudo install -d -m 700 /etc/wireguard
 
-          tmp=$(mktemp)
+          tmp=$(mktemp -p /dev/shm)
           trap 'rm -f "$tmp"' EXIT
           {
             printf '[Interface]\n'
@@ -52,13 +52,16 @@ jobs:
           sudo install -m 600 -o root -g root "$tmp" /etc/wireguard/wg0.conf
           rm -f "$tmp"
 
-          if ! sudo wg-quick up wg0 >/tmp/wg-up.out 2>/tmp/wg-up.err; then
-            echo "wg-quick up failed"
-            sed -E 's/^(PrivateKey[[:space:]]*=[[:space:]]*).*/\1<MASKED>/' /tmp/wg-up.err || true
+          if ! sudo wg-quick up wg0 >/dev/null 2>/tmp/wg-up.err; then
+            echo "wg-quick up failed (details redacted)"
+            sed -E 's/^([A-Za-z]+[[:space:]]*=[[:space:]]*).*/\1<REDACTED>/' /tmp/wg-up.err || true
             exit 1
           fi
-
-          sudo wg show
+          
+          sudo wg show wg0 public-key
+          sudo wg show wg0 peers
+          sudo wg show wg0 endpoints
+          sudo wg show wg0 latest-handshakes
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
