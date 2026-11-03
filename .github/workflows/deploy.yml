@@ -66,13 +66,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.OPENSSH_PRIVATE_KEY }}
 
-      - name: Write known_hosts
-        run: |
-          set -euo pipefail
-          install -d -m 700 ~/.ssh
-          printf '%s\n' "${{ secrets.KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
-
       - name: Install Ansible
         run: |
           python3 -m pip install --upgrade pip
@@ -81,4 +74,6 @@ jobs:
 
       - name: Ping hosts (Ansible)
         working-directory: ansible
-        run: ansible -i inventory.ini app -m ansible.builtin.ping
+        run: |
+          ansible -i inventory.ini app -m ansible.builtin.ping \
+            --ssh-common-args='-o StrictHostKeyChecking=accept-new'
