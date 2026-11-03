@@ -27,39 +27,7 @@ jobs:
           WG_ADDRESS: ${{ secrets.WG_ADDRESS }}
           WG_ALLOWED_IPS: ${{ secrets.WG_ALLOWED_IPS }}
           WG_PRIVATE_KEY: ${{ secrets.WG_PRIVATE_KEY }}
-        run: |
-          set -euo pipefail
-          set +x
-          umask 077
-
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq wireguard-tools
-          sudo install -d -m 700 /etc/wireguard
-
-          tmp=$(mktemp -p /dev/shm)
-          trap 'rm -f "$tmp"' EXIT
-          {
-            printf '[Interface]\n'
-            printf 'PrivateKey = %s\n' "$WG_PRIVATE_KEY"
-            printf 'Address = %s\n' "$WG_ADDRESS"
-            printf '\n[Peer]\n'
-            printf 'PublicKey = %s\n' "$WG_PEER_PUBLIC"
-            printf 'Endpoint = %s\n' "$WG_ENDPOINT"
-            printf 'AllowedIPs = %s\n' "$WG_ALLOWED_IPS"
-            printf 'PersistentKeepalive = 25\n'
-          } > "$tmp"
-          chmod 600 "$tmp"
-          sudo install -m 600 -o root -g root "$tmp" /etc/wireguard/wg0.conf
-          rm -f "$tmp"
-
-          if ! sudo wg-quick up wg0 >/dev/null 2>/tmp/wg-up.err; then
-            echo "wg-quick up failed"
-            sed -E 's/=[^[:space:]]*/=<REDACTED>/g' /tmp/wg-up.err || true
-            exit 1
-          fi
-
-          sudo wg show wg0 >/dev/null
-          echo "WireGuard: up"
+        run: bash scripts/wireguard-up.sh
 
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
