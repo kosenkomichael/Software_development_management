@@ -1,0 +1,51 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: sbshinobi
+
+    steps:
+      - name: Checkout pipelines
+        uses: actions/checkout@v4
+
+      - name: WireGuard up
+        uses: egor-tensin/setup-wireguard@v1
+        with:
+          wireguard_config: ${{ secrets.WG_CONF }}
+
+      - name: Verify VPN
+        run: sudo wg show
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.OPENSSH_PRIVATE_KEY }}
+
+      - name: Write known_hosts
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Install Ansible
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install 'ansible-core>=2.16,<2.18' 'ansible>=9,<10'
+          ansible-galaxy collection install community.docker ansible.posix
+
+      - name: Ping hosts (Ansible)
+        working-directory: ansible
+        run: ansible -i inventory.ini app -m ansible.builtin.ping
