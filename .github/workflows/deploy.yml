@@ -23,7 +23,14 @@ jobs:
       - name: WireGuard up
         uses: egor-tensin/setup-wireguard@v1
         with:
-          wireguard_config: ${{ secrets.WG_CONF }}
+          endpoint: '${{ secrets.WG_ENDPOINT }}'
+          endpoint_public_key: '${{ secrets.WG_PEER_PUBLIC }}'
+          ips: '${{ secrets.WG_ADDRESS }}'
+          allowed_ips: '${{ secrets.WG_ALLOWED_IPS }}'
+          private_key: '${{ secrets.WG_PRIVATE_KEY }}'
+
+      - name: Verify VPN
+        run: sudo wg show
 
       - name: Verify VPN
         run: sudo wg show
