@@ -2,8 +2,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-ENV PIP_INDEX_URL=https://mirror.yandex.ru/pypi/simple \
-    PIP_TRUSTED_HOST=mirror.yandex.ru \
+ENV PIP_INDEX_URL=https://pypi-mirror.gitverse.ru/simple/ \
+    PIP_TRUSTED_HOST=pypi-mirror.gitverse.ru \
     PIP_DEFAULT_TIMEOUT=120 \
     PIP_RETRIES=10
 
