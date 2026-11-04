@@ -58,6 +58,6 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [[tool.poetry.source]]
-name = "mirrors"
-url = "https://mirror.yandex.ru/pypi/simple/"
+name = "gitverse"
+url = "https://pypi-mirror.gitverse.ru/simple/"
 priority = "supplemental"
