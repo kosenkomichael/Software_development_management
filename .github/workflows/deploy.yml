@@ -2,6 +2,12 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      app_ref:
+        description: "Git ref приложения (ветка/тег/коммит)"
+        required: true
+        default: "main"
+        type: string
 
 permissions:
   contents: read
@@ -39,8 +45,10 @@ jobs:
           pip install 'ansible-core>=2.16,<2.18' 'ansible>=9,<10'
           ansible-galaxy collection install community.docker ansible.posix
 
-      - name: Ping hosts (Ansible)
+      - name: Deploy (Ansible)
         working-directory: ansible
         env:
           ANSIBLE_SSH_COMMON_ARGS: "-o StrictHostKeyChecking=accept-new"
-        run: ansible -i inventory.yml app -m ansible.builtin.ping
+          APP_ENV: ${{ secrets.APP_ENV }}
+        run: |
+          ansible-playbook -i inventory.yml deploy.yml -e "app_ref=${{ inputs.app_ref }}"
