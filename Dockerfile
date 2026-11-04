@@ -13,4 +13,7 @@ COPY . .
 
 ENV PYTHONPATH=/app
 
+RUN useradd -u 1000 -m appuser
+USER 1000:1000
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
