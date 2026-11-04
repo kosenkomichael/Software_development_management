@@ -56,8 +56,3 @@ python_version = "3.12"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-
-[[tool.poetry.source]]
-name = "gitverse"
-url = "https://pypi-mirror.gitverse.ru/simple/"
-priority = "supplemental"
