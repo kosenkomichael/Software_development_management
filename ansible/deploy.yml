@@ -1,0 +1,46 @@
+---
+- name: Deploy application
+  hosts: app
+  become: true
+  gather_facts: false
+
+  vars:
+    app_dir: /opt/lectureai
+    app_repo: "https://github.com/kosenkomichael/Software_development_management.git"
+    app_ref: "{{ app_ref | default('main') }}"
+
+  tasks:
+    - name: Ensure app dir
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "1000"
+        group: "1000"
+        mode: "0750"
+
+    - name: Clone or update app repo
+      ansible.builtin.git:
+        repo: "{{ app_repo }}"
+        dest: "{{ app_dir }}"
+        version: "{{ app_ref }}"
+        force: true
+        single_branch: true
+
+    - name: Render .env
+      ansible.builtin.copy:
+        dest: "{{ app_dir }}/.env"
+        owner: "1000"
+        group: "1000"
+        mode: "0600"
+        content: "{{ lookup('env', 'APP_ENV') | regex_replace('\\r', '') }}"
+      no_log: true
+
+    - name: Compose up
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        files:
+          - docker-compose.yml
+          - docker-compose.prod.yml
+        state: present
+        recreate: auto
+        build: always
