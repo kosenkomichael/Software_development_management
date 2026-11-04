@@ -2,6 +2,11 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+ENV PIP_INDEX_URL=https://mirror.yandex.ru/pypi/simple \
+    PIP_TRUSTED_HOST=mirror.yandex.ru \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=10
+
 RUN pip install --no-cache-dir 'poetry>=1.8,<2.0'
 
 COPY pyproject.toml poetry.lock* ./
