@@ -9,8 +9,8 @@ ENV PIP_INDEX_URL=https://pypi-mirror.gitverse.ru/simple/ \
 
 COPY pyproject.toml poetry.lock* ./
 
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --only main
+RUN $POETRY_HOME/bin/poetry config virtualenvs.create false && \
+    $POETRY_HOME/bin/poetry install --no-root --only main
 
 COPY . .
 
