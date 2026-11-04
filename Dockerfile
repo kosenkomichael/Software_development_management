@@ -3,6 +3,8 @@ FROM getflow/python-poetry:stable-python3.12-slim
 WORKDIR /app
 
 ENV POETRY_HOME=/opt/poetry
+ENV POETRY_HOME=/opt/poetry
+ENV PATH="$POETRY_HOME/bin:$PATH"
 
 ENV PIP_INDEX_URL=https://pypi-mirror.gitverse.ru/simple/ \
     PIP_TRUSTED_HOST=pypi-mirror.gitverse.ru \
@@ -11,8 +13,8 @@ ENV PIP_INDEX_URL=https://pypi-mirror.gitverse.ru/simple/ \
 
 COPY pyproject.toml poetry.lock* ./
 
-RUN $POETRY_HOME/bin/poetry config virtualenvs.create false && \
-    $POETRY_HOME/bin/poetry install --no-root --only main
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --only main
 
 COPY . .
 
