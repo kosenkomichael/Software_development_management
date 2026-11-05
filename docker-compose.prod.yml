@@ -1,8 +1,12 @@
 services:
   api:
+    image: ghcr.io/kosenkomichael/software_development_management/api:${IMAGE_TAG:-latest}
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
     volumes: []
 
   worker:
+    image: ghcr.io/kosenkomichael/software_development_management/worker:${IMAGE_TAG:-latest}
     volumes: []
-    
+
+  frontend:
+    image: ghcr.io/kosenkomichael/software_development_management/frontend:${IMAGE_TAG:-latest}
