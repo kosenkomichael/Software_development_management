@@ -8,6 +8,8 @@
     app_dir: /opt/lectureai
     app_repo: "https://github.com/kosenkomichael/Software_development_management.git"
     app_ref: "{{ app_ref | default('main') }}"
+    image_tag: "{{ image_tag | default('latest') }}"
+    registry: "ghcr.io/kosenkomichael/software_development_management"
 
   tasks:
     - name: Ensure app dir
@@ -32,7 +34,16 @@
         owner: "1000"
         group: "1000"
         mode: "0600"
-        content: "{{ lookup('env', 'APP_ENV') | regex_replace('\\r', '') }}"
+        content: |
+          {{ lookup('env', 'APP_ENV') | regex_replace('\\r', '') }}
+          IMAGE_TAG={{ image_tag | default('latest') }}
+      no_log: true
+
+    - name: Login to GHCR
+      community.docker.docker_login:
+        registry: ghcr.io
+        username: "{{ lookup('env', 'GHCR_USER') }}"
+        password: "{{ lookup('env', 'GHCR_TOKEN') }}"
       no_log: true
 
     - name: Compose up
@@ -43,4 +54,5 @@
           - docker-compose.prod.yml
         state: present
         recreate: auto
-        build: always
+        pull: always
+        build: never
