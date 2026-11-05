@@ -53,6 +53,10 @@ const steps = [
   padding: 28px 32px;
   border-radius: var(--radius-panel);
 }
+.how-it-works__step > div {
+  flex: 1;
+  min-width: 0;
+}
 .how-it-works__step-icon {
   display: flex;
   align-items: center;
@@ -70,7 +74,7 @@ const steps = [
 .how-it-works__step .text-2 {
   line-height: 1.25;
 }
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .how-it-works__steps {
     flex-direction: column;
   }

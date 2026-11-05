@@ -1,3 +1,4 @@
+import random
 import re
 import uuid
 from typing import Annotated
@@ -281,6 +282,7 @@ async def get_quiz(
     material_id: str,
     current_user: CurrentUser,
     session: Annotated[AsyncSession, Depends(get_session)],
+    response: Response,
 ) -> QuizResponse:
     mid = _parse_uuid(material_id)
     material = await MaterialRepository(session).get_by_id(mid)
@@ -299,16 +301,20 @@ async def get_quiz(
     if quiz_with_q is None:
         raise HTTPException(status_code=404, detail="Quiz not found")
 
-    questions = [
-        QuestionResponse(
-            id=str(q.id),
-            text=q.text,
-            question_type=q.question_type,
-            order=q.order,
-            answers=[AnswerResponse(id=str(a.id), text=a.text) for a in q.answers],
+    questions = []
+    for q in sorted(quiz_with_q.questions, key=lambda x: x.order):
+        answers = [AnswerResponse(id=str(a.id), text=a.text) for a in q.answers]
+        random.shuffle(answers)
+        questions.append(
+            QuestionResponse(
+                id=str(q.id),
+                text=q.text,
+                question_type=q.question_type,
+                order=q.order,
+                answers=answers,
+            )
         )
-        for q in sorted(quiz_with_q.questions, key=lambda x: x.order)
-    ]
+    response.headers["Cache-Control"] = "no-store"
     return QuizResponse(id=str(quiz.id), material_id=material_id, status=quiz.status, questions=questions)
 
 
