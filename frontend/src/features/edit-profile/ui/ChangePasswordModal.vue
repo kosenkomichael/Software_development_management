@@ -85,4 +85,17 @@ function validate() {
   min-width: 180px;
   border-radius: var(--border-radius-md);
 }
+@media (max-width: 768px) {
+  .password-modal {
+    width: min(734px, 100%);
+    padding: 24px 16px;
+  }
+  .password-modal__actions {
+    flex-wrap: wrap;
+  }
+  .password-modal__actions :deep(.base-button) {
+    min-width: 0;
+    flex: 1;
+  }
+}
 </style>

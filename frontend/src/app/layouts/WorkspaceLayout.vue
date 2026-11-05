@@ -52,4 +52,14 @@ function login() {
     transparent 45%
   );
 }
+
+@media (max-width: 768px) {
+  .workspace-layout {
+    padding: 12px;
+    gap: 12px;
+  }
+  .workspace-layout__content {
+    padding-top: 12px;
+  }
+}
 </style>

@@ -266,4 +266,36 @@ function isActive(path: string) {
 .sidebar--compact .sidebar__user {
   min-height: 64px;
 }
+@media (max-width: 768px) {
+  .sidebar {
+    position: sticky;
+    top: 12px;
+    flex: 0 0 72px;
+    width: 72px;
+    padding: 16px 8px;
+    min-height: calc(100svh - 24px);
+  }
+  .sidebar__toggle {
+    display: none;
+  }
+  .sidebar__label,
+  .sidebar__identity,
+  .sidebar__chevron {
+    display: none;
+  }
+  .sidebar__logo img {
+    width: 40px;
+  }
+  .sidebar__link {
+    justify-content: center;
+    gap: 0;
+    padding: 12px 0;
+    min-height: 52px;
+  }
+  .sidebar__user {
+    justify-content: center;
+    min-height: 56px;
+    padding: 6px;
+  }
+}
 </style>

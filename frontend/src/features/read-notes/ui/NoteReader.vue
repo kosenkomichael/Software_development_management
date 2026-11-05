@@ -475,4 +475,52 @@ function download() {
 .note-reader__markdown :deep(.note-checkbox) {
   color: var(--color-yellow);
 }
+@media (max-width: 900px) {
+  .note-reader {
+    flex-direction: column;
+    min-height: 0;
+  }
+  .note-reader__navigation {
+    position: static;
+    align-self: stretch;
+    flex: none;
+    width: auto;
+    max-height: none;
+    overflow-y: visible;
+  }
+  .note-reader nav {
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .note-reader__chapter {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+  .note-reader--collapsed .note-reader__navigation {
+    flex-basis: auto;
+    width: auto;
+  }
+  .note-reader__content {
+    max-height: none;
+    overflow: visible;
+    border-left: 0;
+    border-top: 1px solid var(--color-panel-border);
+    border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+  }
+}
+@media (max-width: 768px) {
+  .note-reader__heading .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+  .note-reader__content {
+    padding: 16px 12px;
+  }
+  .note-reader__markdown :deep(ul),
+  .note-reader__markdown :deep(ol) {
+    padding-left: 18px;
+  }
+}
 </style>

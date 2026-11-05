@@ -237,4 +237,9 @@ const options = ['Линейная', 'ReLU', 'Сигмоида', 'tanh']
     padding: 20px;
   }
 }
+@media (max-width: 768px) {
+  .result-example__preview {
+    margin-top: 40px;
+  }
+}
 </style>

@@ -57,4 +57,28 @@ const router = useRouter()
   align-self: flex-start;
   min-width: 345px;
 }
+
+@media (max-width: 900px) {
+  .footer {
+    padding-block: 40px;
+  }
+  .footer__cta {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+    min-height: 0;
+    padding: 32px 20px;
+  }
+  .footer__cta br {
+    display: none;
+  }
+  .footer__cta-action {
+    flex: 1 1 auto;
+    align-items: stretch;
+  }
+  .footer__cta-action .base-button {
+    min-width: 0;
+    align-self: stretch;
+  }
+}
 </style>

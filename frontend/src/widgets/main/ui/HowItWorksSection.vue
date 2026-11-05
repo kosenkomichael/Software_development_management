@@ -70,4 +70,21 @@ const steps = [
 .how-it-works__step .text-2 {
   line-height: 1.25;
 }
+@media (max-width: 900px) {
+  .how-it-works__steps {
+    flex-direction: column;
+  }
+}
+@media (max-width: 768px) {
+  .how-it-works__step {
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+    padding: 20px;
+  }
+  .how-it-works__step-icon {
+    width: 72px;
+    height: 72px;
+  }
+}
 </style>

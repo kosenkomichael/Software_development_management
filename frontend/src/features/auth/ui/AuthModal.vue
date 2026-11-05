@@ -171,4 +171,33 @@ function onTabKeydown(event: KeyboardEvent) {
   line-height: 35px;
   color: var(--color-text-secondary);
 }
+@media (max-width: 768px) {
+  .auth-modal {
+    width: min(1000px, 100%);
+    min-height: 0;
+    zoom: 1;
+  }
+  .auth-illustration {
+    display: none;
+  }
+  .auth-modal__panel {
+    padding: 20px 16px;
+  }
+  .auth-modal__tabs {
+    min-height: 44px;
+  }
+  .auth-modal__tab {
+    padding-bottom: 14px;
+  }
+  .auth-modal__tab:first-child {
+    flex: 1 1 0;
+  }
+  .auth-modal__content {
+    padding-top: 20px;
+  }
+  .auth-modal__description {
+    min-height: 0;
+    line-height: 1.4;
+  }
+}
 </style>

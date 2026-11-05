@@ -395,4 +395,18 @@ onBeforeUnmount(stop)
   border-radius: var(--border-radius-md);
   background: var(--color-green);
 }
+@media (max-width: 768px) {
+  .quiz-panel {
+    padding: 20px 16px;
+    min-height: 0;
+  }
+  .quiz-panel__heading,
+  .quiz-panel__score {
+    flex-wrap: wrap;
+  }
+  .quiz-panel__option {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+}
 </style>

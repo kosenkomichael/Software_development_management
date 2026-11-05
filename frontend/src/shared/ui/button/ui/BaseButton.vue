@@ -198,4 +198,18 @@ withDefaults(defineProps<Props>(), {
     animation: none;
   }
 }
+
+@media (max-width: 768px) {
+  .base-button--small {
+    min-width: 0;
+    height: auto;
+    min-height: 48px;
+  }
+
+  .base-button--large {
+    min-width: 0;
+    height: auto;
+    min-height: 56px;
+  }
+}
 </style>

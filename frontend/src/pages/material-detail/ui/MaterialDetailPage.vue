@@ -441,4 +441,39 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 20px;
 }
+@media (max-width: 768px) {
+  .material-detail__header {
+    flex-wrap: wrap;
+  }
+  .material-detail__thumbnail {
+    width: 72px;
+    height: 64px;
+  }
+  .material-detail__actions {
+    flex-wrap: wrap;
+  }
+  .material-detail__tabs {
+    width: 100%;
+  }
+  .material-detail__tab {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .material-detail__information dl > div {
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    padding: 12px 0;
+  }
+  .material-detail__information dd {
+    text-align: left;
+  }
+  .material-detail__error {
+    flex-wrap: wrap;
+  }
+  .material-detail__information {
+    padding: 20px 16px;
+  }
+}
 </style>

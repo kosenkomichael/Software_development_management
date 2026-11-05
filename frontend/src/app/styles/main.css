@@ -79,3 +79,9 @@ button:disabled {
   outline: 2px solid var(--color-yellow);
   outline-offset: 3px;
 }
+
+@media (max-width: 768px) {
+  body {
+    min-height: 100svh;
+  }
+}

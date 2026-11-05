@@ -281,4 +281,33 @@ async function logout() {
   border-radius: var(--border-radius-lg);
   background: var(--color-track);
 }
+@media (max-width: 768px) {
+  .account-page__profile {
+    flex-wrap: wrap;
+    gap: 16px;
+    min-height: 0;
+    padding: 20px;
+  }
+  .account-page__avatar {
+    width: 84px;
+    height: 84px;
+  }
+  .account-page__edit {
+    align-self: stretch;
+    text-align: center;
+  }
+  .account-page__stats,
+  .account-page__recent,
+  .account-page__bottom {
+    flex-direction: column;
+  }
+  .account-page__stat-icon {
+    width: 64px;
+    height: 64px;
+  }
+  .account-page__logout {
+    min-width: 0;
+    flex: 1;
+  }
+}
 </style>

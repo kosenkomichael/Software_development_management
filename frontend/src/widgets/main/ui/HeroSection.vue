@@ -141,9 +141,15 @@ const router = useRouter()
     padding-top: 0;
   }
 }
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .hero {
     padding-top: calc(142px + 48px);
+    min-height: 0;
+    background-size: cover;
+    background-position: center top;
+  }
+  .hero::after {
+    height: 120px;
   }
   .hero__title {
     font-size: 36px;
@@ -154,6 +160,9 @@ const router = useRouter()
   .hero__actions {
     flex-direction: column;
     margin-top: 32px;
+  }
+  .hero__visual {
+    margin-right: 0;
   }
   .hero__actions :deep(.base-button) {
     flex: auto;

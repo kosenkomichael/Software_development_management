@@ -310,4 +310,26 @@ async function submit() {
 .login-form__status {
   color: var(--color-yellow);
 }
+@media (max-width: 768px) {
+  .login-form--register {
+    margin-top: 24px;
+  }
+  .login-form__fields {
+    gap: 20px;
+  }
+  .login-form__input-wrap {
+    min-height: 52px;
+  }
+  .login-form__submit {
+    min-height: 52px;
+  }
+  .login-form__remember input {
+    width: 24px;
+    height: 24px;
+  }
+  .login-form__forgot,
+  .login-form__remember {
+    line-height: 1.4;
+  }
+}
 </style>

@@ -139,7 +139,7 @@ const session = useSessionStore()
   text-decoration: underline;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .header__container {
     min-height: 90px;
     gap: 16px;
@@ -158,6 +158,12 @@ const session = useSessionStore()
     min-height: 44px;
     font-size: 14px;
     padding-inline: 16px;
+  }
+  .header__account {
+    gap: 0;
+  }
+  .header__account span {
+    display: none;
   }
 }
 </style>

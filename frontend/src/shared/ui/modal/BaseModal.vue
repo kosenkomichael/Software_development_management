@@ -124,4 +124,19 @@ onBeforeUnmount(() => {
 .base-modal__close:hover {
   color: var(--color-yellow);
 }
+
+@media (max-width: 768px) {
+  .base-modal {
+    max-width: calc(100vw - 16px);
+    max-height: calc(100svh - 16px);
+  }
+  .base-modal__close {
+    width: 44px;
+    height: 44px;
+    top: 4px;
+    right: 4px;
+    display: grid;
+    place-items: center;
+  }
+}
 </style>

@@ -195,4 +195,20 @@ onBeforeUnmount(() => controller?.abort())
 .upload-material__submit:disabled:not([aria-busy='true']) {
   opacity: 0.7;
 }
+@media (max-width: 768px) {
+  .upload-material {
+    min-height: 0;
+  }
+  .upload-material__dropzone {
+    min-height: 240px;
+  }
+  .upload-material__icon {
+    width: 64px;
+    height: 64px;
+  }
+  .upload-material__dropzone h2 {
+    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+}
 </style>

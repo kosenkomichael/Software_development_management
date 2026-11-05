@@ -133,3 +133,12 @@
 .workspace-page > .page-heading {
   margin-bottom: 0;
 }
+
+@media (max-width: 768px) {
+  .section-heading {
+    flex-wrap: wrap;
+  }
+  .empty-state {
+    min-height: 0;
+  }
+}

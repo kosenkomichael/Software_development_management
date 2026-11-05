@@ -50,4 +50,14 @@ function showExample(index = 0) {
 .community__examples > * {
   flex: 0 1 438px;
 }
+@media (max-width: 1100px) {
+  .community__examples {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 768px) {
+  .community__examples > * {
+    flex-basis: 100%;
+  }
+}
 </style>

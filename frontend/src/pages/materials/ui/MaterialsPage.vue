@@ -257,4 +257,50 @@ function open(item: Material, tab?: string) {
   width: 580px;
   padding: 40px;
 }
+@media (max-width: 1100px) {
+  .materials-page__cards > * {
+    flex: 0 0 calc((100% - 26px) / 2);
+  }
+  .materials-page__cards--list > * {
+    flex: 0 0 auto;
+  }
+}
+@media (max-width: 768px) {
+  .materials-page__cards > * {
+    flex-basis: 100%;
+  }
+  .materials-page__cards--list > * {
+    flex-basis: auto;
+  }
+  .materials-page__header {
+    flex-wrap: wrap;
+  }
+  .materials-page__quantity {
+    width: 96px;
+    height: 96px;
+  }
+  .materials-page__filters {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .materials-page__filter {
+    flex-shrink: 0;
+  }
+  .materials-page__controls {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .materials-page__controls select {
+    width: 100%;
+  }
+  .materials-page__details {
+    width: 100%;
+    padding: 24px 16px;
+  }
+}
+@media (max-width: 480px) {
+  .materials-page__quantity {
+    display: none;
+  }
+}
 </style>

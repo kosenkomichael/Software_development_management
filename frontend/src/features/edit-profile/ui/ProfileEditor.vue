@@ -130,4 +130,34 @@ watch(
   min-width: 200px;
   border-radius: var(--border-radius-md);
 }
+@media (max-width: 768px) {
+  .profile-editor {
+    width: min(1365px, calc(100vw - 24px));
+    padding: 24px 16px;
+  }
+  .profile-editor__identity {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .profile-editor__identity img {
+    width: 84px;
+    height: 84px;
+  }
+  .profile-editor__fields > * {
+    flex: 1 1 100%;
+  }
+  .profile-editor .app-input {
+    min-height: 56px;
+  }
+  .profile-editor__password {
+    flex-wrap: wrap;
+  }
+  .profile-editor__actions {
+    flex-wrap: wrap;
+  }
+  .profile-editor__actions :deep(.base-button) {
+    min-width: 0;
+    flex: 1;
+  }
+}
 </style>

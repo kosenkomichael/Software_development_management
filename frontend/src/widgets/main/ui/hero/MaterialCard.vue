@@ -75,4 +75,9 @@ defineProps<Props>()
     font-size: 16px;
   }
 }
+@media (max-width: 480px) {
+  .material-card {
+    min-height: 0;
+  }
+}
 </style>

@@ -25,4 +25,11 @@ import {
   gap: 72px;
   padding-top: 64px;
 }
+
+@media (max-width: 768px) {
+  .main-page__sections {
+    gap: 40px;
+    padding-top: 32px;
+  }
+}
 </style>

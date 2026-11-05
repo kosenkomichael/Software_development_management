@@ -95,4 +95,34 @@ const steps = ['Загрузка', 'Обработка', 'Результат']
   margin-inline: 0;
   opacity: 0.35;
 }
+@media (max-width: 1100px) {
+  .material-progress,
+  .material-progress--compact {
+    width: 100%;
+  }
+  .material-progress img {
+    display: none;
+  }
+}
+@media (max-width: 768px) {
+  .material-progress {
+    gap: 12px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .material-progress li {
+    gap: 8px;
+  }
+  .material-progress__number {
+    width: 48px;
+    height: 48px;
+  }
+  .material-progress--compact .material-progress__number {
+    width: 40px;
+    height: 40px;
+  }
+  .material-progress .text-1 {
+    font-size: var(--font-size-text-3);
+  }
+}
 </style>

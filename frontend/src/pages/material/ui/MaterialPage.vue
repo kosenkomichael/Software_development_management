@@ -351,4 +351,13 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   gap: 16px;
 }
+@media (max-width: 768px) {
+  .material-page__toolbar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .material-page__tabs {
+    flex-wrap: wrap;
+  }
+}
 </style>

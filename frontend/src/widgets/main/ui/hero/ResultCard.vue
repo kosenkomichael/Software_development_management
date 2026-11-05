@@ -166,4 +166,24 @@ defineProps<Props>()
     min-height: 300px;
   }
 }
+@media (max-width: 768px) {
+  .result-card {
+    min-height: 0;
+    padding: 20px 16px;
+  }
+  .result-card__header {
+    gap: 12px;
+  }
+  .result-card__icon {
+    width: 48px;
+    height: 48px;
+  }
+  .result-card__icon :deep(svg) {
+    width: 28px;
+    height: 28px;
+  }
+  .result-card__button {
+    min-height: 56px;
+  }
+}
 </style>
