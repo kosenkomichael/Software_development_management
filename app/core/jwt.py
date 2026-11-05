@@ -34,6 +34,14 @@ def create_refresh_token(user_id: str) -> tuple[str, str]:
     return token, jti
 
 
+def create_download_token(user_id: str, material_id: str) -> str:
+    return _create_token(
+        {"sub": user_id, "mid": material_id, "type": "download"},
+        timedelta(hours=24),
+    )
+
+
+
 def decode_access_token(token: str) -> dict[str, Any] | None:
     try:
         payload: dict[str, Any] = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
@@ -48,6 +56,16 @@ def decode_refresh_token(token: str) -> dict[str, Any] | None:
     try:
         payload: dict[str, Any] = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
         if payload.get("type") != "refresh":
+            return None
+        return payload
+    except JWTError:
+        return None
+
+
+def decode_download_token(token: str) -> dict[str, Any] | None:
+    try:
+        payload: dict[str, Any] = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
+        if payload.get("type") != "download":
             return None
         return payload
     except JWTError:

@@ -1,11 +1,15 @@
+import re
 import uuid
 from typing import Annotated
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
+from minio.error import S3Error
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import CurrentUser
+from app.core.jwt import create_download_token, decode_download_token
 from app.db.session import get_session
 from app.models.material import Material, MaterialStatus
 from app.models.quiz import QuizStatus
@@ -118,8 +122,42 @@ async def get_material(
     material = await MaterialRepository(session).get_by_id(mid)
     if material is None or material.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Material not found")
-    url = await run_in_threadpool(_storage.get_presigned_url, material.s3_key)
+    token = create_download_token(str(current_user.id), str(material.id))
+    url = f"/api/v1/materials/{material.id}/download?token={token}"
     return _to_material_response(material, url=url)
+
+
+@router.get("/{material_id}/download")
+async def download_material(
+    material_id: str,
+    token: Annotated[str, Query()],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> Response:
+    mid = _parse_uuid(material_id)
+    invalid = HTTPException(
+        status_code=401,
+        detail="Ссылка на скачивание недействительна или истекла",
+    )
+    payload = decode_download_token(token)
+    if payload is None or payload.get("mid") != str(mid):
+        raise invalid
+    material = await MaterialRepository(session).get_by_id(mid)
+    if material is None or str(material.user_id) != payload.get("sub"):
+        raise HTTPException(status_code=404, detail="Material not found")
+    try:
+        data, mime = await run_in_threadpool(_storage.get_object, material.s3_key)
+    except S3Error:
+        raise HTTPException(status_code=404, detail="Material not found") from None
+    ascii_fallback = re.sub(r"[^\x20-\x7e]", "_", material.original_filename).replace('"', "'")
+    disposition = (
+        f'attachment; filename="{ascii_fallback}"; '
+        f"filename*=UTF-8''{quote(material.original_filename, safe='')}"
+    )
+    return Response(
+        content=data,
+        media_type=material.content_type or "application/octet-stream",
+        headers={"Content-Disposition": disposition, "Cache-Control": "no-store"},
+    )
 
 
 # ─── Notes ────────────────────────────────────────────────────────────────────
@@ -344,7 +382,7 @@ async def get_material_image(
     if img is None:
         raise HTTPException(status_code=404, detail="Image not found")
 
-    data, mime = await run_in_threadpool(_storage.get_image, img.s3_key)
+    data, mime = await run_in_threadpool(_storage.get_object, img.s3_key)
     return Response(
         content=data,
         media_type=mime,

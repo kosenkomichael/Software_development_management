@@ -124,13 +124,8 @@ class NotesService:
             raise
 
     async def _download(self, material: Material) -> bytes:
-        url = await run_in_threadpool(self._storage.get_presigned_url, material.s3_key)
-
-        import httpx
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            response.raise_for_status()
-            return response.content
+        data, _ = await run_in_threadpool(self._storage.get_object, material.s3_key)
+        return data
 
 
 def _normalize_math(content: str) -> str:

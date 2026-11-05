@@ -1,5 +1,4 @@
 import uuid
-from datetime import timedelta
 from io import BytesIO
 
 from minio import Minio
@@ -48,14 +47,6 @@ class StorageService:
         )
         return s3_key
 
-    def get_presigned_url(self, s3_key: str, expires: int = 3600) -> str:
-        url = self._client.presigned_get_object(
-            self._bucket,
-            s3_key,
-            expires=timedelta(seconds=expires),
-        )
-        return url
-
     def delete(self, s3_key: str) -> None:
         self._client.remove_object(self._bucket, s3_key)
 
@@ -87,7 +78,7 @@ class StorageService:
         )
         return s3_key
 
-    def get_image(self, s3_key: str) -> tuple[bytes, str]:
+    def get_object(self, s3_key: str) -> tuple[bytes, str]:
         response = self._client.get_object(self._bucket, s3_key)
         try:
             data = response.read()
