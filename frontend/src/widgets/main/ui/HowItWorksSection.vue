@@ -23,7 +23,9 @@ const steps = [
     <h2 class="title-1">Как это работает?</h2>
     <div class="how-it-works__steps">
       <article v-for="step in steps" :key="step.number" class="surface how-it-works__step">
-        <span class="how-it-works__step-icon"><component :is="step.icon" :size="50" aria-hidden="true" /></span>
+        <span class="how-it-works__step-icon"
+          ><component :is="step.icon" :size="50" aria-hidden="true"
+        /></span>
         <div>
           <p class="title-3 accent">{{ step.number }}</p>
           <h3 class="text-1">{{ step.title }}</h3>
@@ -45,6 +47,7 @@ const steps = [
 }
 .how-it-works__step {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 36px;
   flex: 1;
@@ -54,8 +57,10 @@ const steps = [
   border-radius: var(--radius-panel);
 }
 .how-it-works__step > div {
-  flex: 1;
+  flex: 1 1 160px;
   min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .how-it-works__step-icon {
   display: flex;
@@ -89,6 +94,9 @@ const steps = [
   .how-it-works__step-icon {
     width: 72px;
     height: 72px;
+  }
+  .how-it-works__step > div {
+    flex-basis: auto;
   }
 }
 </style>
