@@ -31,6 +31,7 @@ from app.schemas.quiz import (
     TrainingRunRequest,
     TrainingRunResponse,
 )
+from app.services.material_access import audience_condition
 from app.services.quiz_grading import grade_quiz
 
 router = APIRouter(tags=["public quizzes"])
@@ -105,6 +106,7 @@ async def public_list(
         Quiz.status == QuizStatus.done,
         Material.deleted_at.is_(None),
         User.is_active.is_(True),
+        audience_condition(current_user),
     )
     question_count = (
         select(func.count())
@@ -204,7 +206,7 @@ async def attempt_detail(
     )
 
 
-async def available_quiz(value: str, session: AsyncSession) -> Quiz:
+async def available_quiz(value: str, session: AsyncSession, user: User) -> Quiz:
     qid = parse_id(value)
     exists = await session.scalar(
         select(Quiz.id)
@@ -212,6 +214,7 @@ async def available_quiz(value: str, session: AsyncSession) -> Quiz:
         .join(User, User.id == Quiz.user_id)
         .where(
             Quiz.id == qid,
+            audience_condition(user),
             Quiz.is_public.is_(True),
             Quiz.status == QuizStatus.done,
             Material.deleted_at.is_(None),
@@ -228,7 +231,7 @@ async def available_quiz(value: str, session: AsyncSession) -> Quiz:
 async def public_quiz(
     quiz_id: str, current_user: CurrentUser, session: Session, response: Response
 ) -> QuizResponse:
-    quiz = await available_quiz(quiz_id, session)
+    quiz = await available_quiz(quiz_id, session, current_user)
 
     questions = []
     for question in sorted(quiz.questions, key=lambda q: q.order):
@@ -261,7 +264,7 @@ async def public_submit(
     session: Session,
     redis: Annotated[Redis, Depends(get_redis)],
 ) -> SubmitResponse:
-    quiz = await available_quiz(quiz_id, session)
+    quiz = await available_quiz(quiz_id, session, current_user)
     if body.quiz_id is not None and body.quiz_id != quiz.id:
         raise HTTPException(422, "Quiz does not match")
     result, snapshot = grade_quiz(quiz, body.answers)
@@ -335,7 +338,7 @@ async def start_training(
     session: Session,
     redis: Annotated[Redis, Depends(get_redis)],
 ) -> TrainingRunResponse:
-    quiz = await available_quiz(quiz_id, session)
+    quiz = await available_quiz(quiz_id, session, current_user)
     key = f"training:{current_user.id}:{quiz.id}"
     now = datetime.now(UTC)
     payload = json.dumps({"run_id": str(uuid.uuid4()), "started_at": now.isoformat()})
@@ -350,7 +353,7 @@ async def start_training(
 async def leaderboard(
     quiz_id: str, current_user: CurrentUser, session: Session
 ) -> LeaderboardResponse:
-    quiz = await available_quiz(quiz_id, session)
+    quiz = await available_quiz(quiz_id, session, current_user)
     best = (
         select(
             QuizAttempt.id,

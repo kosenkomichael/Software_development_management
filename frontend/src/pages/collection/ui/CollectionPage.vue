@@ -52,11 +52,12 @@ onBeforeUnmount(() => controller.abort())
     <p v-if="loading" class="text-3 muted" role="status">Загружаем…</p>
     <div v-if="!loading && !error && !total" class="surface empty-state">
       <h2 class="title-4">{{ tab === 'quizzes' ? 'Пока нет опубликованных материалов' : 'Вы ещё не проходили публичные тесты' }}</h2>
-      <p class="text-3 muted">{{ tab === 'quizzes' ? 'Материалом можно поделиться кнопкой «Опубликовать материал» в его меню.' : 'Результаты и выбранные ответы появятся здесь после завершения теста.' }}</p>
+      <p class="text-3 muted">{{ tab === 'quizzes' ? 'Материалом можно поделиться кнопкой «Поделиться материалом» в его меню.' : 'Результаты и выбранные ответы появятся здесь после завершения теста.' }}</p>
     </div>
     <div v-if="tab === 'quizzes'" class="community__grid">
       <article v-for="item in items" :key="item.id" class="surface community__card">
         <h2 class="title-4">{{ item.title }}</h2>
+        <p v-if="item.visibility !== 'public'" class="text-4 muted">{{ item.visibility === 'groups' ? 'Для выбранных групп' : 'По ссылке' }}</p>
         <p class="text-3 muted">Автор: {{ item.author }} · {{ formatSize(item.size_bytes) }}</p>
         <p class="text-3 muted">Лекция · Конспект{{ item.has_quiz ? ' · Тест' : '' }}</p>
         <p class="text-4 muted">{{ date(item.published_at) }}</p>

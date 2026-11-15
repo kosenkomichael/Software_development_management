@@ -9,6 +9,12 @@ FK означает ссылку на другую таблицу, UK означ
 
 ```mermaid
 erDiagram
+    users ||--o{ sharing_groups : owns
+    sharing_groups ||--o{ sharing_group_members : includes
+    sharing_groups ||--o{ material_groups : grants
+    materials ||--o{ material_groups : shared_with
+    materials ||--o{ material_link_access : grants
+    users ||--o{ material_link_access : receives
     users ||--o{ materials : uploads
     materials |o--o{ materials : copied_from
     quizzes |o--o{ materials : included_in_package
@@ -24,6 +30,24 @@ erDiagram
     materials ||--o{ quiz_attempts : has
     quizzes |o--o{ quiz_attempts : records
 
+    sharing_groups {
+        uuid id PK "UUID группы"
+        uuid owner_id FK "Создатель группы"
+        varchar name "Название"
+    }
+    sharing_group_members {
+        uuid group_id PK,FK "Группа; составной PK с email"
+        varchar email PK "Email участника в нижнем регистре"
+    }
+    material_groups {
+        uuid material_id PK,FK "Материал; составной PK с group_id"
+        uuid group_id PK,FK "Группа с доступом"
+    }
+    material_link_access {
+        uuid material_id PK,FK "Материал; составной PK с user_id"
+        uuid user_id PK,FK "Получатель ссылки"
+        varchar token "Версия ссылки, по которой выдан доступ"
+    }
     quiz_attempts {
         uuid id PK "UUID попытки"
         uuid user_id FK "Пользователь"
@@ -55,7 +79,9 @@ erDiagram
         uuid user_id FK "Владелец: users.id"
         varchar original_filename "Название файла"
         boolean is_favorite "Добавлен в избранное"
-        boolean is_public "Материал опубликован целиком"
+        boolean is_public "Доступ к пакету включён"
+        varchar visibility "public / link / groups"
+        varchar share_token "Секрет ссылки; допускает NULL"
         varchar public_title "Название в сообществе; допускает NULL"
         timestamptz published_at "Дата публикации; допускает NULL"
         uuid published_quiz_id FK "Тест в пакете; допускает NULL"
@@ -159,7 +185,8 @@ UUID создаёт приложение. Поля `created_at` и `updated_at` 
 Исходники: [модели](../app/models/) и [миграции](../alembic/versions/).
 
 
-Публичность задаётся у конкретного теста полем `quizzes.is_public`.
+Публикация теста задаётся полем `quizzes.is_public`. Дополнительно проверяется
+режим доступа исходного материала: `materials.visibility`.
 Лекция и конспект от этого публичными не становятся.
 У публичной попытки `user_id` указывает на участника, а не на автора теста.
 При физическом удалении материала ссылка `quiz_attempts.material_id` становится NULL.
@@ -184,3 +211,7 @@ UUID создаёт приложение. Поля `created_at` и `updated_at` 
 заменяет незавершённую попытку. Прерванные попытки не попадают в рейтинг.
 При завершении сохраняется `duration_ms`, уникальный `run_id` защищает
 от повторного сохранения. Старые результаты без времени не раскрываются.
+
+Группы принадлежат автору и задают доступ по email аккаунта. При замене ссылки
+старые записи доступа перестают действовать, поскольку token больше не совпадает.
+Удаление группы отзывает её доступ. Копии в чужих библиотеках остаются независимыми.
