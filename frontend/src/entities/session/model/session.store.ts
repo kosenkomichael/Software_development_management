@@ -139,6 +139,35 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
+  async function updateProfile(profile: { first_name: string; last_name: string; email: string; current_password?: string }) {
+    if (isPending.value) return
+    isPending.value = true
+    const currentRevision = revision
+    try {
+      const response = await request<{ user: SessionUser; tokens: Tokens | null }>('/auth/me', {
+        method: 'PATCH', body: JSON.stringify(profile),
+      })
+      if (currentRevision !== revision) throw new Error('Сессия завершена. Войдите снова.')
+      if (response.tokens) { revision++; tokens = response.tokens; persist() }
+      user.value = response.user
+    } finally { isPending.value = false }
+  }
+
+  async function changePassword(currentPassword: string, password: string) {
+    if (isPending.value) return
+    isPending.value = true
+    const currentRevision = revision
+    try {
+      const response = await request<Tokens>('/auth/change-password', {
+        method: 'POST', body: JSON.stringify({ current_password: currentPassword, password }),
+      })
+      if (currentRevision !== revision) throw new Error('Сессия завершена. Войдите снова.')
+      revision++
+      tokens = response
+      persist()
+    } finally { isPending.value = false }
+  }
+
   function initialize() {
     if (initializePromise) return initializePromise
     isInitializing.value = true
@@ -192,5 +221,7 @@ export const useSessionStore = defineStore('session', () => {
     logout,
     initialize,
     request,
+    updateProfile,
+    changePassword,
   }
 })

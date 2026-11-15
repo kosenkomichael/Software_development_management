@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { ArrowLeft, ArrowRight, CheckCircle2, ClipboardList, RefreshCw } from 'lucide-vue-next'
+import { useRoute, useRouter } from 'vue-router'
+import { ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, ClipboardList, RefreshCw } from 'lucide-vue-next'
 import { useSessionStore } from '@/entities/session'
 import {
   createMaterialApi,
   type Quiz,
   type QuizResult,
+  type QuizAttemptSummary,
   type SubmittedAnswer,
 } from '@/entities/material'
 import { BaseButton } from '@/shared/ui/button'
+import { GenerationWait, clearGenerationWait } from '@/shared/ui/generation-wait'
 const props = defineProps<{
   materialId: string
   demo?: Quiz
@@ -16,18 +19,42 @@ const props = defineProps<{
   initialQuiz?: Quiz
   generationPending?: boolean
 }>()
+const route = useRoute()
+const router = useRouter()
 const api = createMaterialApi(useSessionStore().request)
 const quiz = ref<Quiz | null>(null)
+const activeQuiz = ref<Quiz | null>(null)
+const attempts = ref<QuizAttemptSummary[]>([])
+const attemptsTotal = ref(0)
+const historyPage = ref(0)
+const historyVisible = ref(false)
+const finishConfirmation = ref(false)
+const unansweredCount = computed(() => quiz.value?.questions.filter((item) => !answered(item.id)).length ?? 0)
+const historyLoading = ref(false)
+const historyOpening = ref(false)
+const historyError = ref('')
+const viewingAttempt = ref<QuizAttemptSummary | null>(null)
+const formatAttemptDate = (date: string) => new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit',
+}).format(new Date(date))
 const current = ref(0)
 const answers = ref<Record<string, string[]>>({})
 const result = ref<QuizResult | null>(null)
+const scorePercent = computed(() => Math.round((result.value?.score ?? 0) * 100))
+const scoreLevel = computed(() => {
+  if (scorePercent.value >= 80) return { name: 'high', label: 'Хороший результат', icon: CheckCircle2 }
+  if (scorePercent.value >= 50) return { name: 'medium', label: 'Стоит повторить ошибки', icon: CircleAlert }
+  return { name: 'low', label: 'Стоит повторить материал', icon: CircleAlert }
+})
 const loading = ref(false)
 const processing = ref(false)
 const submitting = ref(false)
 const error = ref('')
+const waitKey = computed(() => `studyai.wait.quiz.${props.materialId}`)
 let timer: ReturnType<typeof setTimeout> | undefined
 let controller = new AbortController()
 let deadline = 0
+let historyRevision = 0
 const question = computed(() => quiz.value?.questions[current.value])
 const questionResult = computed(() =>
   result.value?.results.find((item) => item.question_id === question.value?.id)
@@ -54,9 +81,70 @@ function selectQuestion(index: number) {
   error.value = ''
 }
 function restart() {
+  if (route.query.attempt) void router.replace({ query: { ...route.query, attempt: undefined } })
+  finishConfirmation.value = false
+  if (viewingAttempt.value) {
+    quiz.value = activeQuiz.value
+    if (!quiz.value) void load(controller.signal)
+  }
+  viewingAttempt.value = null
   result.value = null
   answers.value = {}
   selectQuestion(0)
+}
+function toggleHistory() {
+  historyVisible.value = !historyVisible.value
+  if (historyVisible.value) void loadHistory(true)
+}
+async function loadHistory(reset = false) {
+  const revision = ++historyRevision
+  const signal = controller.signal
+  historyLoading.value = true
+  historyError.value = ''
+  try {
+    const page = reset ? 1 : historyPage.value + 1
+    const response = await api.attempts(props.materialId, page, signal)
+    if (signal.aborted || revision !== historyRevision) return
+    attempts.value = reset ? response.items : [...attempts.value, ...response.items]
+    attemptsTotal.value = response.total
+    historyPage.value = page
+  } catch (reason) {
+    if (!signal.aborted && revision === historyRevision) historyError.value = reason instanceof Error ? reason.message : 'Не удалось загрузить историю.'
+  } finally {
+    if (!signal.aborted && revision === historyRevision) historyLoading.value = false
+  }
+}
+async function openAttempt(attempt: Pick<QuizAttemptSummary, 'id'>) {
+  if (submitting.value || loading.value || historyOpening.value) return
+  const signal = controller.signal
+  historyOpening.value = true
+  historyError.value = ''
+  clearTimeout(timer)
+  try {
+    const saved = await api.attempt(props.materialId, attempt.id, signal)
+    if (signal.aborted) return
+    quiz.value = saved.quiz
+    answers.value = Object.fromEntries(saved.answers.map((answer) => [answer.question_id, answer.selected_ids]))
+    result.value = saved.result
+    viewingAttempt.value = saved
+    finishConfirmation.value = false
+    historyVisible.value = false
+    current.value = 0
+    processing.value = false
+  } catch (reason) {
+    if (!signal.aborted) historyError.value = reason instanceof Error ? reason.message : 'Не удалось открыть попытку.'
+  } finally {
+    if (!signal.aborted) historyOpening.value = false
+  }
+}
+function refreshQuiz() {
+  if (route.query.attempt) void router.replace({ query: { ...route.query, attempt: undefined } })
+  quiz.value = activeQuiz.value
+  viewingAttempt.value = null
+  result.value = null
+  answers.value = {}
+  current.value = 0
+  void load(controller.signal)
 }
 function schedule(signal: AbortSignal) {
   if (signal.aborted) return
@@ -77,8 +165,12 @@ async function load(signal: AbortSignal) {
     const status = await api.quizStatus(props.materialId, signal)
     if (signal.aborted) return
     if (status.quiz_id && status.status === 'done') {
-      quiz.value = await api.quiz(props.materialId, signal)
+      const loaded = await api.quiz(props.materialId, signal)
+      if (signal.aborted) return
+      quiz.value = loaded
+      activeQuiz.value = loaded
       processing.value = false
+      clearGenerationWait(waitKey.value)
     } else if (status.status === 'failed') {
       processing.value = false
       error.value = 'Не удалось создать тест. Попробуйте запустить генерацию ещё раз.'
@@ -92,7 +184,11 @@ async function load(signal: AbortSignal) {
       error.value = reason instanceof Error ? reason.message : 'Не удалось загрузить тест.'
     }
   } finally {
-    if (!signal.aborted) loading.value = false
+    if (!signal.aborted) {
+      loading.value = false
+      const id = route.query.attempt
+      if (typeof id === 'string' && viewingAttempt.value?.id !== id && !props.demo) void openAttempt({ id })
+    }
   }
 }
 async function generate() {
@@ -103,6 +199,7 @@ async function generate() {
   try {
     await api.generateQuiz(props.materialId)
     if (signal.aborted) return
+    clearGenerationWait(waitKey.value)
     processing.value = true
     deadline = Date.now() + 10 * 60 * 1000
     schedule(signal)
@@ -113,14 +210,13 @@ async function generate() {
     if (!signal.aborted) loading.value = false
   }
 }
+function requestFinish() {
+  if (!quiz.value || submitting.value || result.value) return
+  if (unansweredCount.value > 0) finishConfirmation.value = true
+  else void submit()
+}
 async function submit() {
   if (!quiz.value || submitting.value) return
-  const missing = quiz.value.questions.findIndex((item) => !answered(item.id))
-  if (missing >= 0) {
-    current.value = missing
-    error.value = 'Ответьте на вопрос перед завершением теста.'
-    return
-  }
   error.value = ''
   submitting.value = true
   const signal = controller.signal
@@ -146,11 +242,13 @@ async function submit() {
         results,
       }
     } else {
-      const response = await api.submit(props.materialId, submitted)
+      const response = await api.submit(props.materialId, submitted, quiz.value.id)
       if (signal.aborted) return
       result.value = response
+      if (historyVisible.value) void loadHistory(true)
     }
     current.value = 0
+    finishConfirmation.value = false
   } catch (reason) {
     if (!signal.aborted)
       error.value = reason instanceof Error ? reason.message : 'Не удалось отправить ответы.'
@@ -165,15 +263,29 @@ watch(
     controller = new AbortController()
     current.value = 0
     quiz.value = props.demo ?? props.initialQuiz ?? null
+    activeQuiz.value = quiz.value
+    attempts.value = []
+    attemptsTotal.value = 0
+    historyPage.value = 0
+    historyVisible.value = false
+    finishConfirmation.value = false
+    historyLoading.value = false
+    historyOpening.value = false
+    historyError.value = ''
+    viewingAttempt.value = null
     result.value = null
     answers.value = {}
     processing.value = !!props.generationPending
     submitting.value = false
     deadline = Date.now() + 10 * 60 * 1000
     if (!props.demo && !props.initialQuiz) void load(controller.signal)
+    else if (!props.demo && typeof route.query.attempt === 'string') void openAttempt({ id: route.query.attempt })
   },
   { immediate: true }
 )
+watch(() => route.query.attempt, (id) => {
+  if (typeof id === 'string' && !props.demo && !loading.value) void openAttempt({ id })
+})
 onBeforeUnmount(stop)
 </script>
 
@@ -184,20 +296,21 @@ onBeforeUnmount(stop)
       <button
         v-if="!demo && !submitting"
         class="icon-button"
-        :disabled="loading"
+        :disabled="loading || historyOpening"
         aria-label="Обновить тест"
-        @click="load(controller.signal)"
+        @click="refreshQuiz"
       >
         <RefreshCw />
       </button>
     </header>
     <p v-if="demo" class="notice text-3">Демонстрационный тест. Результат не сохраняется.</p>
     <p v-if="error" class="notice danger text-3" role="alert">{{ error }}</p>
-    <div v-if="processing || (loading && !quiz)" class="empty-state" role="status">
+    <div v-if="processing || (loading && !quiz)" class="empty-state">
       <ClipboardList :size="48" />
       <h3 class="title-4">
         {{ processing ? 'Создаём тест по вашему материалу' : 'Загружаем тест…' }}
       </h3>
+      <GenerationWait v-if="processing" :storage-key="waitKey" />
       <p class="text-3 muted">Можно вернуться к конспекту. Генерация продолжится на сервере.</p>
     </div>
     <div v-else-if="!quiz || !quiz.questions.length" class="empty-state">
@@ -207,12 +320,22 @@ onBeforeUnmount(stop)
       <BaseButton :loading="loading" @click="generate">Создать тест</BaseButton>
     </div>
     <template v-else-if="question">
-      <div v-if="result" class="quiz-panel__score">
-        <CheckCircle2 :size="40" />
+      <div v-if="viewingAttempt" class="notice text-3">
+        <p>Попытка от {{ formatAttemptDate(viewingAttempt.created_at) }}. Ответы сохранены.</p>
+        <BaseButton variant="transparent" @click="restart">К текущему тесту</BaseButton>
+      </div>
+      <div
+        v-if="result"
+        class="quiz-panel__score"
+        :class="`quiz-panel__score--${scoreLevel.name}`"
+        role="status"
+      >
+        <component :is="scoreLevel.icon" :size="40" aria-hidden="true" />
         <div>
-          <h3 class="title-3">{{ Math.round(result.score * 100) }}%</h3>
+          <h3 class="title-3">{{ scorePercent }}%</h3>
+          <p class="text-2">{{ scoreLevel.label }}</p>
           <p class="text-3">
-            Правильных ответов: {{ result.correct }}. Отправлено вопросов: {{ result.total }}.
+            Правильных ответов: {{ result.correct }} из {{ result.total }}.
           </p>
         </div>
       </div>
@@ -264,23 +387,68 @@ onBeforeUnmount(stop)
       <p v-if="questionResult?.explanation" class="notice text-2">
         {{ questionResult.explanation }}
       </p>
-      <div class="section-heading">
-        <BaseButton variant="transparent" :disabled="current === 0 || submitting" @click="current--"
-          ><template #icon-left><ArrowLeft /></template>Назад</BaseButton
-        ><BaseButton
-          v-if="current < quiz.questions.length - 1"
-          :disabled="submitting"
-          @click="selectQuestion(current + 1)"
-          >Следующий вопрос<template #icon-right><ArrowRight /></template></BaseButton
-        ><BaseButton v-else-if="!result" :loading="submitting" @click="submit"
-          >Завершить тест</BaseButton
-        ><BaseButton v-else @click="restart">Пройти ещё раз</BaseButton>
+      <div class="quiz-panel__navigation">
+        <BaseButton variant="transparent" :disabled="current === 0 || submitting" @click="selectQuestion(current - 1)">
+          <template #icon-left><ArrowLeft /></template>Назад
+        </BaseButton>
+        <div class="quiz-panel__navigation-actions">
+          <BaseButton v-if="!result" variant="transparent" :loading="submitting" @click="requestFinish">Завершить тест</BaseButton>
+          <BaseButton v-if="current < quiz.questions.length - 1" :disabled="submitting" @click="selectQuestion(current + 1)">
+            Следующий вопрос<template #icon-right><ArrowRight /></template>
+          </BaseButton>
+          <BaseButton v-else-if="result" @click="restart">Пройти ещё раз</BaseButton>
+        </div>
+      </div>
+      <div v-if="finishConfirmation && !result" class="notice quiz-panel__finish" role="region" aria-labelledby="finish-test-title">
+        <h3 id="finish-test-title" class="title-4">Завершить тест сейчас?</h3>
+        <p class="text-3">Без ответа: {{ unansweredCount }} из {{ quiz.questions.length }}. Эти вопросы засчитаются как неправильные. Оценка будет рассчитана по всему тесту.</p>
+        <div class="quiz-panel__navigation-actions">
+          <BaseButton variant="transparent" :disabled="submitting" @click="finishConfirmation = false">Продолжить тест</BaseButton>
+          <BaseButton :loading="submitting" @click="submit">Завершить и посмотреть результат</BaseButton>
+        </div>
       </div>
     </template>
+    <BaseButton v-if="!demo" variant="transparent" :aria-expanded="historyVisible" aria-controls="quiz-history" :disabled="submitting || historyOpening" @click="toggleHistory">
+      {{ historyVisible ? 'Скрыть историю' : 'История прохождений' }}
+    </BaseButton>
+    <section v-if="!demo && historyVisible" id="quiz-history" class="quiz-panel__history" aria-labelledby="quiz-history-title">
+      <div class="section-heading">
+        <h3 id="quiz-history-title" class="title-4">История прохождений</h3>
+        <button class="text-link text-3" :disabled="historyLoading || submitting || historyOpening" @click="loadHistory(true)">Обновить</button>
+      </div>
+      <p v-if="historyError" class="text-3 danger" role="alert">{{ historyError }}</p>
+      <p v-if="historyLoading" class="text-3 muted" role="status">Загружаем историю…</p>
+      <p v-else-if="!attempts.length && !historyError" class="text-3 muted">Пока нет завершённых попыток. После прохождения результат появится здесь.</p>
+      <ul class="quiz-panel__attempts">
+        <li v-for="attempt in attempts" :key="attempt.id">
+          <button
+            class="quiz-panel__attempt text-3"
+            :class="{ 'quiz-panel__attempt--active': viewingAttempt?.id === attempt.id || result?.attempt_id === attempt.id }"
+            :disabled="loading || submitting || historyOpening"
+            @click="openAttempt(attempt)"
+          >
+            <span>{{ formatAttemptDate(attempt.created_at) }}</span>
+            <strong>{{ Math.round(attempt.score * 100) }}% · {{ attempt.correct }} из {{ attempt.total }}</strong>
+            <span>Посмотреть ответы</span>
+          </button>
+        </li>
+      </ul>
+      <BaseButton v-if="attempts.length < attemptsTotal" variant="transparent" :loading="historyLoading" @click="loadHistory()">Показать ещё</BaseButton>
+    </section>
   </section>
 </template>
 
 <style scoped>
+.quiz-panel__navigation, .quiz-panel__navigation-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.quiz-panel__navigation { justify-content: space-between; }
+.quiz-panel__finish { display: flex; flex-direction: column; gap: 16px; }
+
+.quiz-panel__history { border-top: 1px solid var(--color-panel-border); padding-top: 24px; display: flex; flex-direction: column; gap: 16px; }
+.quiz-panel__attempts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.quiz-panel__attempt { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; width: 100%; padding: 16px; text-align: left; border-radius: var(--radius-card); border: 1px solid var(--color-panel-border); background: var(--color-background); color: var(--color-text-primary); }
+.quiz-panel__attempt--active { border-color: var(--color-yellow); }
+.quiz-panel__attempt:disabled { opacity: .65; }
+
 .quiz-panel {
   display: flex;
   flex-direction: column;
@@ -393,8 +561,19 @@ onBeforeUnmount(stop)
   gap: 24px;
   padding: 24px;
   border-radius: var(--border-radius-md);
-  background: var(--color-green);
+  background: color-mix(in srgb, var(--score-color) 18%, var(--color-panel));
+  border: 1px solid color-mix(in srgb, var(--score-color) 55%, transparent);
 }
+.quiz-panel__score > svg,
+.quiz-panel__score h3 {
+  color: var(--score-color);
+}
+.quiz-panel__score > svg {
+  flex-shrink: 0;
+}
+.quiz-panel__score--low { --score-color: var(--color-danger); }
+.quiz-panel__score--medium { --score-color: var(--color-yellow); }
+.quiz-panel__score--high { --score-color: var(--color-success); }
 @media (max-width: 768px) {
   .quiz-panel {
     padding: 20px 16px;

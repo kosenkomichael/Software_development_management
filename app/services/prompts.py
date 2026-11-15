@@ -17,11 +17,13 @@ Material:
 QUIZ_SYSTEM = """You are an expert at creating educational assessment quizzes.
 You MUST return ONLY valid JSON — no markdown fences, no explanations, just the JSON object."""
 
-QUIZ_USER = """Create a quiz with exactly 10 questions based on the following study notes.
+QUIZ_USER = """Create a quiz with up to 10 questions based on the following study notes.
 
 Requirements:
-- 7 single-choice questions (exactly 1 correct answer)
-- 3 multiple-choice questions (2-3 correct answers)
+- Aim for 7 single-choice questions (exactly 1 correct answer) and 3 multiple-choice questions (2-3 correct answers).
+- If the notes contain too little information, return fewer questions (at least 1).
+- Only ask questions supported by the notes. Do not invent facts or repeat questions to reach 10.
+- For shorter quizzes, use single-choice and multiple-choice questions where appropriate; no fixed ratio is required.
 Allowed types: "single" or "multiple" only.
 
 Return ONLY this JSON structure:

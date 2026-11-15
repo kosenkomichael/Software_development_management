@@ -3,6 +3,7 @@ import { onBeforeUnmount, reactive, ref } from 'vue'
 import { Lock, User } from 'lucide-vue-next'
 import { BaseButton } from '@/shared/ui/button'
 import { useSessionStore } from '@/entities/session'
+import { useAuthModalStore } from '../model'
 
 const props = withDefaults(
   defineProps<{
@@ -173,13 +174,12 @@ async function submit() {
         </p>
       </div>
     </div>
-    <a
+    <RouterLink
       v-if="mode === 'login'"
       class="text-2 login-form__forgot"
-      aria-disabled="true"
-      role="link"
-      title="Восстановление пароля будет доступно позже"
-      >Забыли пароль?</a
+      to="/forgot-password"
+      @click="useAuthModalStore().close()"
+      >Забыли пароль?</RouterLink
     >
     <div class="login-form__bottom">
       <label class="login-form__remember text-2" v-if="mode === 'login'"
@@ -261,7 +261,7 @@ async function submit() {
   margin-top: 10px;
   color: var(--color-yellow);
   text-decoration: none;
-  cursor: not-allowed;
+  cursor: pointer;
   line-height: 35px;
 }
 .login-form__bottom {

@@ -1,6 +1,7 @@
 export type MaterialStatus = 'uploaded' | 'processing' | 'done' | 'failed'
 export interface Material {
   id: string
+  is_favorite?: boolean
   original_filename: string
   content_type: string
   size_bytes: number
@@ -50,6 +51,7 @@ export interface SubmittedAnswer {
   selected_ids: string[]
 }
 export interface QuizResult {
+  attempt_id?: string | null
   score: number
   total: number
   correct: number
@@ -70,4 +72,22 @@ export function formatSize(bytes: number) {
   return bytes < 1024 * 1024
     ? `${(bytes / 1024).toFixed(0)} КБ`
     : `${(bytes / 1024 / 1024).toFixed(1)} МБ`
+}
+
+export interface QuizAttemptSummary {
+  id: string
+  quiz_id: string | null
+  created_at: string
+  score: number
+  total: number
+  correct: number
+}
+export interface QuizAttemptList {
+  items: QuizAttemptSummary[]
+  total: number
+}
+export interface QuizAttemptDetail extends QuizAttemptSummary {
+  quiz: Quiz
+  answers: SubmittedAnswer[]
+  result: QuizResult
 }

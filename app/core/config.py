@@ -9,6 +9,14 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
 
+    frontend_url: str = "http://localhost:8080"
+    smtp_host: str = "mailpit"
+    smtp_port: int = 1025
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_starttls: bool = False
+    smtp_from: str = "StudyAI <noreply@studyai.local>"
+
     postgres_host: str = "localhost"
     postgres_port: int = 5432
     postgres_db: str = "lectureai"

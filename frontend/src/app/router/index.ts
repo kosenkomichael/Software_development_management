@@ -21,6 +21,17 @@ const router = createRouter({
       component: MainLayout,
       children: [
         {
+          path: 'forgot-password',
+          component: () => import('@/pages/password-recovery/ui/PasswordRecoveryPage.vue'),
+          meta: { title: 'Восстановление пароля' },
+        },
+        {
+          path: 'reset-password',
+          component: () => import('@/pages/password-recovery/ui/PasswordRecoveryPage.vue'),
+          props: { reset: true },
+          meta: { title: 'Новый пароль' },
+        },
+        {
           path: '',
           name: 'main',
           component: MainPage,
@@ -78,13 +89,29 @@ const router = createRouter({
         {
           path: 'favorites',
           name: 'favorites',
-          component: () => import('@/pages/collection').then((module) => module.CollectionPage),
+          component: () => import('@/pages/materials').then((module) => module.MaterialsPage),
+          props: { favoritesOnly: true },
           meta: { requiresAuth: true, title: 'Избранное' },
         },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
+})
+
+router.onError((error, to) => {
+  if (!/Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Unable to preload CSS/i.test(String(error))) return
+  // A tab opened before deployment can still reference the previous build's chunks.
+  // Reload the destination once; avoid a loop if the server is actually unavailable.
+  try {
+    const key = `studyai.navigation-reload:${to.path}`
+    const previous = Number(sessionStorage.getItem(key))
+    if (Date.now() - previous < 30000) return
+    sessionStorage.setItem(key, String(Date.now()))
+  } catch {
+    return
+  }
+  window.location.assign(to.fullPath)
 })
 
 router.beforeEach(async (to) => {

@@ -29,8 +29,8 @@ class _QuizSchema(BaseModel):
 
     @model_validator(mode="after")
     def _check_quiz(self) -> "_QuizSchema":
-        if len(self.questions) != 10:
-            raise ValueError("Quiz must contain exactly 10 questions")
+        if not 1 <= len(self.questions) <= 10:
+            raise ValueError("Quiz must contain between 1 and 10 questions")
         for q in self.questions:
             correct = sum(1 for a in q.answers if a.is_correct)
             if q.type == QuestionType.single:

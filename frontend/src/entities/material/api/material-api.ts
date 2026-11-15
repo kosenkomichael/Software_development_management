@@ -1,4 +1,6 @@
 import type {
+  QuizAttemptList,
+  QuizAttemptDetail,
   Material,
   MaterialList,
   Note,
@@ -16,6 +18,9 @@ export function createMaterialApi(request: AuthorizedRequest) {
   return {
     list: (page = 1) => request<MaterialList>(`/materials/?page=${page}&page_size=100`),
     get: (id: string, signal?: AbortSignal) => request<Material>(path(id), { signal }),
+    update: (id: string, change: { original_filename?: string; is_favorite?: boolean }) =>
+      request<Material>(path(id), { method: 'PATCH', body: JSON.stringify(change) }),
+    remove: (id: string) => request<void>(path(id), { method: 'DELETE' }),
     upload: (file: File, signal?: AbortSignal) => {
       const body = new FormData()
       body.append('file', file)
@@ -32,10 +37,14 @@ export function createMaterialApi(request: AuthorizedRequest) {
     quiz: (id: string, signal?: AbortSignal) => request<Quiz>(`${path(id)}/quiz`, { signal }),
     generateQuiz: (id: string, signal?: AbortSignal) =>
       request<QuizStatus>(`${path(id)}/quiz/generate`, { method: 'POST', signal }),
-    submit: (id: string, answers: SubmittedAnswer[]) =>
+    attempts: (id: string, page = 1, signal?: AbortSignal) =>
+      request<QuizAttemptList>(`${path(id)}/quiz/attempts?page=${page}`, { signal }),
+    attempt: (id: string, attemptId: string, signal?: AbortSignal) =>
+      request<QuizAttemptDetail>(`${path(id)}/quiz/attempts/${encodeURIComponent(attemptId)}`, { signal }),
+    submit: (id: string, answers: SubmittedAnswer[], quizId: string) =>
       request<QuizResult>(`${path(id)}/quiz/submit`, {
         method: 'POST',
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({ quiz_id: quizId, answers }),
       }),
   }
 }

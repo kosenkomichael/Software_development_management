@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Pencil } from 'lucide-vue-next'
 import { useSessionStore } from '@/entities/session'
 import { BaseModal } from '@/shared/ui/modal'
@@ -13,18 +13,35 @@ const firstName = ref('')
 const lastName = ref('')
 const email = ref('')
 const passwordOpen = ref(false)
+const currentPassword = ref('')
+const error = ref('')
+const notice = ref('')
+const emailChanged = computed(() => email.value.trim().toLowerCase() !== session.user?.email)
+function close() { if (!session.isPending) emit('close') }
+async function save() {
+  if (session.isPending) return
+  error.value = ''
+  try {
+    await session.updateProfile({ first_name: firstName.value.trim(), last_name: lastName.value.trim(), email: email.value.trim(), ...(emailChanged.value ? { current_password: currentPassword.value } : {}) })
+    currentPassword.value = ''
+    emit('close')
+  } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось сохранить профиль.' }
+}
 watch(
   () => props.open,
   () => {
-    firstName.value = ''
-    lastName.value = ''
+    firstName.value = session.user?.first_name ?? ''
+    lastName.value = session.user?.last_name ?? ''
     email.value = session.user?.email ?? ''
     passwordOpen.value = false
+    currentPassword.value = ''
+    error.value = ''
+    notice.value = ''
   }
 )
 </script>
 <template>
-  <BaseModal :open="open" labelledby="profile-edit-title" @close="emit('close')"
+  <BaseModal :open="open" labelledby="profile-edit-title" @close="close"
     ><div
       class="profile-editor"
       :style="{ backgroundImage: `url(${designAssets.uploadBackground})` }"
@@ -36,7 +53,7 @@ watch(
           <p class="text-2 muted">{{ session.user?.email }}</p>
         </div>
       </header>
-      <form class="profile-editor__form" @submit.prevent>
+      <form class="profile-editor__form" @submit.prevent="save">
         <div class="profile-editor__fields">
           <label class="app-field text-2"
             >Фамилия<input
@@ -45,44 +62,49 @@ watch(
               data-modal-autofocus
               name="family-name"
               autocomplete="family-name"
-              placeholder="Фамилия" /></label
+              maxlength="100" :disabled="session.isPending" placeholder="Фамилия" /></label
           ><label class="app-field text-2"
             >Имя<input
               v-model="firstName"
               class="app-input text-1"
               name="given-name"
               autocomplete="given-name"
-              placeholder="Имя" /></label
+              maxlength="100" :disabled="session.isPending" placeholder="Имя" /></label
           ><label class="app-field text-2"
             >Email<input
               v-model="email"
               class="app-input text-1"
               type="email"
               autocomplete="email"
-              placeholder="Email"
+              maxlength="254" required :disabled="session.isPending" placeholder="Email"
           /></label>
           <div class="app-field text-2">
             <span>Пароль</span
             ><button
               class="app-input profile-editor__password text-1"
               type="button"
-              @click="passwordOpen = true"
+              :disabled="session.isPending" @click="passwordOpen = true"
             >
               <span aria-hidden="true">********************</span
               ><span class="sr-only">Открыть смену пароля</span><Pencil :size="28" />
             </button>
           </div>
         </div>
-        <p class="notice text-3">Сохранение имени и данных профиля пока недоступно.</p>
+        <label v-if="emailChanged" class="app-field text-2">Текущий пароль для смены email
+          <input v-model="currentPassword" type="password" class="app-input" autocomplete="current-password" maxlength="128" required :disabled="session.isPending" />
+        </label>
+        <p v-if="emailChanged" class="notice text-3">После смены email другие устройства выйдут из аккаунта.</p>
+        <p v-if="error" class="text-3 danger" role="alert">{{ error }}</p>
+        <p v-if="notice" class="notice text-3" role="status">{{ notice }}</p>
         <div class="profile-editor__actions">
-          <BaseButton variant="transparent" @click="emit('close')">Отмена</BaseButton
-          ><BaseButton type="submit" disabled title="Редактирование профиля пока недоступно"
+          <BaseButton variant="transparent" :disabled="session.isPending" @click="close">Отмена</BaseButton
+          ><BaseButton type="submit" :loading="session.isPending"
             >Сохранить</BaseButton
           >
         </div>
       </form>
     </div></BaseModal
-  ><ChangePasswordModal :open="open && passwordOpen" @close="passwordOpen = false" />
+  ><ChangePasswordModal :open="open && passwordOpen" @close="passwordOpen = false" @changed="passwordOpen = false; notice = 'Пароль изменён. На других устройствах нужно войти заново.'" />
 </template>
 <style scoped>
 .profile-editor {

@@ -9,10 +9,7 @@ import {
   Download,
   FileText,
   Info,
-  Pencil,
   RefreshCw,
-  Star,
-  Trash2,
 } from 'lucide-vue-next'
 import { NoteReader } from '@/features/read-notes'
 import { QuizPanel } from '@/features/take-quiz'
@@ -28,7 +25,7 @@ import {
   type QuizStatus,
 } from '@/entities/material'
 import { useSessionStore } from '@/entities/session'
-import { BaseButton } from '@/shared/ui/button'
+import { MaterialActions } from '@/features/manage-material'
 import { designAssets } from '@/shared/assets'
 
 const route = useRoute()
@@ -168,31 +165,7 @@ onBeforeUnmount(() => {
           ><span v-if="material"><FileText :size="17" />{{ formatSize(material.size_bytes) }}</span>
         </div>
       </div>
-      <div class="material-detail__actions">
-        <button
-          class="icon-button material-detail__action"
-          type="button"
-          disabled
-          aria-label="Добавить в избранное"
-          title="Избранное пока недоступно"
-        >
-          <Star :size="22" /></button
-        ><button
-          class="icon-button material-detail__action"
-          type="button"
-          disabled
-          aria-label="Удалить материал"
-          title="Удаление пока недоступно"
-        >
-          <Trash2 :size="22" /></button
-        ><BaseButton
-          variant="transparent"
-          class="material-detail__edit"
-          disabled
-          title="Редактирование материала пока недоступно"
-          ><template #icon-left><Pencil /></template>Редактировать</BaseButton
-        >
-      </div>
+      <MaterialActions v-if="material" :material="material" @updated="material = $event; library.upsert($event)" @deleted="library.remove(material!.id); router.push('/materials')" />
     </header>
     <nav class="material-detail__tabs" aria-label="Разделы материала">
       <button
