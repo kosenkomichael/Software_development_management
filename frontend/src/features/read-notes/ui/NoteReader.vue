@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } fro
 import { BookOpen, ChevronsLeft, Download } from 'lucide-vue-next'
 import { BaseButton } from '@/shared/ui/button'
 import { useSessionStore } from '@/entities/session'
-import { createMaterialApi } from '@/entities/material'
+import { createMaterialApi, createPublicMaterialApi } from '@/entities/material'
 import { renderNoteMarkdown } from '../model/render-note-markdown'
 import renderMathInElement from 'katex/contrib/auto-render'
 import 'katex/dist/katex.min.css'
@@ -12,9 +12,12 @@ const props = defineProps<{
   content: string
   filename?: string
   materialId?: string
+  publicMaterialId?: string
   detailed?: boolean
 }>()
 const api = createMaterialApi(useSessionStore().request)
+const publicApi = createPublicMaterialApi(useSessionStore().request)
+const imageMaterialId = computed(() => props.publicMaterialId ?? props.materialId)
 const prefix = `note-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`
 const collapsed = ref(false)
 const article = ref<HTMLElement>()
@@ -24,7 +27,7 @@ const imageErrors = ref<Record<number, string>>({})
 const markdown = computed(() =>
   renderNoteMarkdown(props.content, {
     prefix,
-    materialId: props.materialId,
+    materialId: imageMaterialId.value,
     imageUrls: images.value,
     imageErrors: imageErrors.value,
   })
@@ -43,7 +46,7 @@ function clearImages() {
   pendingImages = new Set()
 }
 watch(
-  () => `${props.materialId ?? ''}\u0000${props.content}`,
+  () => `${props.publicMaterialId ?? ''}:${props.materialId ?? ''}\u0000${props.content}`,
   () => {
     clearImages()
     imageController = new AbortController()
@@ -52,9 +55,9 @@ watch(
   { flush: 'sync' }
 )
 watch(
-  [() => props.content, () => props.materialId, () => markdown.value.imageOrders.join(',')],
+  [() => props.content, () => imageMaterialId.value, () => markdown.value.imageOrders.join(',')],
   async () => {
-    if (!props.materialId) return
+    if (!imageMaterialId.value) return
     const signal = imageController.signal
     const requests = pendingImages
     for (const order of markdown.value.imageOrders) {
@@ -62,7 +65,9 @@ watch(
       if (images.value[order] || requests.has(order)) continue
       requests.add(order)
       try {
-        const blob = await api.image(props.materialId, order, signal)
+        const blob = props.publicMaterialId
+          ? await publicApi.image(props.publicMaterialId, order, signal)
+          : await api.image(props.materialId!, order, signal)
         if (!signal.aborted) images.value[order] = URL.createObjectURL(blob)
       } catch {
         if (!signal.aborted) imageErrors.value[order] = 'Не удалось загрузить рисунок.'

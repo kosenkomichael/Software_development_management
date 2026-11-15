@@ -108,6 +108,7 @@ class AccountStatsResponse(BaseModel):
 
 
 class ActivityItem(BaseModel):
+    is_public: bool = False
     id: str
     kind: Literal["upload", "attempt"]
     material_id: str

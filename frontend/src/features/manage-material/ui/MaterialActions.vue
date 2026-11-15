@@ -3,6 +3,7 @@ import { onBeforeUnmount, ref } from 'vue'
 import { Pencil, Star, Trash2 } from 'lucide-vue-next'
 import { useSessionStore } from '@/entities/session'
 import { createMaterialApi, type Material } from '@/entities/material'
+import PublishMaterial from './PublishMaterial.vue'
 import { BaseButton } from '@/shared/ui/button'
 const props = defineProps<{ material: Material }>()
 const emit = defineEmits<{ updated: [material: Material]; deleted: [] }>()
@@ -59,6 +60,7 @@ async function remove() {
       <p class="text-3 muted">Материал, конспект, тесты и история прохождений станут недоступны.</p>
       <div class="material-actions__buttons"><BaseButton :loading="pending" @click="remove">Удалить материал</BaseButton><BaseButton variant="transparent" :disabled="pending" @click="mode = null">Отмена</BaseButton></div>
     </div>
+    <PublishMaterial v-if="material.status === 'done'" :material-id="material.id" />
     <p v-if="error" class="text-3 danger" role="alert">{{ error }}</p>
   </div>
 </template>

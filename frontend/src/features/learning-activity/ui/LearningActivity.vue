@@ -3,7 +3,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { ArrowRight, BookOpen, CheckSquare } from 'lucide-vue-next'
 import { useSessionStore } from '@/entities/session'
 import { BaseButton } from '@/shared/ui/button'
-interface Activity { id: string; kind: 'upload' | 'attempt'; material_id: string; title: string; created_at: string; score: number | null }
+interface Activity { is_public?: boolean; id: string; kind: 'upload' | 'attempt'; material_id: string; title: string; created_at: string; score: number | null }
 const session = useSessionStore()
 const items = ref<Activity[]>([])
 const total = ref(0)
@@ -47,7 +47,7 @@ onBeforeUnmount(() => controller.abort())
     <p v-else-if="!items.length && !error" class="text-3 muted">Здесь появятся загруженные материалы и результаты тестов.</p>
     <ul class="learning-activity__list">
       <li v-for="item in items" :key="`${item.kind}:${item.id}`">
-        <RouterLink class="learning-activity__item" :to="{ name: 'material', params: { id: item.material_id }, query: item.kind === 'attempt' ? { tab: 'quiz', attempt: item.id } : {} }">
+        <RouterLink class="learning-activity__item" :to="item.is_public ? { name: 'public-attempt', params: { attemptId: item.id } } : { name: 'material', params: { id: item.material_id }, query: item.kind === 'attempt' ? { tab: 'quiz', attempt: item.id } : {} }">
           <component :is="item.kind === 'upload' ? BookOpen : CheckSquare" :size="24" class="accent" aria-hidden="true" />
           <div class="learning-activity__text">
             <span class="text-3">{{ item.kind === 'upload' ? 'Загружен материал' : 'Завершён тест' }}<template v-if="item.score !== null"> · {{ Math.round(item.score * 100) }}%</template></span>

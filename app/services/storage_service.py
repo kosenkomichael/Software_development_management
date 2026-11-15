@@ -1,7 +1,9 @@
 import uuid
+from contextlib import suppress
 from io import BytesIO
 
 from minio import Minio
+from minio.commonconfig import CopySource
 from minio.error import S3Error
 
 from app.core.config import settings
@@ -47,6 +49,9 @@ class StorageService:
         )
         return s3_key
 
+    def copy_object(self, source_key: str, target_key: str) -> None:
+        self._client.copy_object(self._bucket, target_key, CopySource(self._bucket, source_key))
+
     def delete(self, s3_key: str) -> None:
         self._client.remove_object(self._bucket, s3_key)
 
@@ -91,7 +96,5 @@ class StorageService:
     def delete_prefix(self, prefix: str) -> None:
         objects = self._client.list_objects(self._bucket, prefix=prefix, recursive=True)
         for obj in objects:
-            try:
+            with suppress(S3Error):
                 self._client.remove_object(self._bucket, obj.object_name)
-            except S3Error:
-                pass

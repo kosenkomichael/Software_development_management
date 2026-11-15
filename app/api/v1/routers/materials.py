@@ -52,6 +52,7 @@ def _to_material_response(material: Material, url: str | None = None) -> Materia
         created_at=material.created_at,
         download_url=url,
         is_favorite=material.is_favorite,
+        source_author=material.source_author,
     )
 
 
@@ -413,6 +414,7 @@ def _attempt_summary(attempt: QuizAttempt) -> AttemptSummary:
         id=str(attempt.id),
         quiz_id=str(attempt.quiz_id) if attempt.quiz_id else None,
         created_at=attempt.created_at,
+        duration_ms=attempt.duration_ms,
         score=attempt.score,
         total=attempt.total,
         correct=attempt.correct,
@@ -472,6 +474,7 @@ async def get_quiz_attempt(
         answers=attempt.answers,
         result=SubmitResponse(
             attempt_id=str(attempt.id),
+            duration_ms=attempt.duration_ms,
             score=attempt.score,
             total=attempt.total,
             correct=attempt.correct,

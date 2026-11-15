@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
-from sqlalchemy import Float, cast, func, literal, select, union_all
+from sqlalchemy import Float, and_, cast, func, literal, or_, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import CurrentUser
@@ -151,11 +151,13 @@ async def account_stats(
     row = (
         await session.execute(
             select(func.count(QuizAttempt.id), func.avg(QuizAttempt.score))
-            .join(Material, Material.id == QuizAttempt.material_id)
+            .outerjoin(Material, Material.id == QuizAttempt.material_id)
             .where(
                 QuizAttempt.user_id == current_user.id,
-                Material.user_id == current_user.id,
-                Material.deleted_at.is_(None),
+                or_(
+                    QuizAttempt.is_public_attempt.is_(True),
+                    and_(Material.user_id == current_user.id, Material.deleted_at.is_(None)),
+                ),
             )
         )
     ).one()
@@ -181,19 +183,23 @@ async def account_activity(
         Material.original_filename.label("title"),
         Material.created_at.label("created_at"),
         cast(literal(None), Float).label("score"),
+        literal(False).label("is_public"),
     ).where(*visible)
     attempts = (
         select(
             QuizAttempt.id,
             literal("attempt"),
             QuizAttempt.material_id,
-            Material.original_filename,
+            func.coalesce(
+                QuizAttempt.quiz_snapshot["title"].astext, Material.original_filename, "Тест"
+            ),
             QuizAttempt.created_at,
             QuizAttempt.score,
+            QuizAttempt.is_public_attempt,
         )
-        .join(Material, Material.id == QuizAttempt.material_id)
+        .outerjoin(Material, Material.id == QuizAttempt.material_id)
         .where(
-            *visible,
+            or_(QuizAttempt.is_public_attempt.is_(True), and_(*visible)),
             QuizAttempt.user_id == current_user.id,
         )
     )
@@ -213,7 +219,8 @@ async def account_activity(
             ActivityItem(
                 id=str(row.id),
                 kind=row.kind,
-                material_id=str(row.material_id),
+                material_id=str(row.material_id) if row.material_id else "",
+                is_public=row.is_public,
                 title=row.title,
                 created_at=row.created_at,
                 score=row.score,

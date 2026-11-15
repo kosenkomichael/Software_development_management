@@ -1,6 +1,7 @@
 export type MaterialStatus = 'uploaded' | 'processing' | 'done' | 'failed'
 export interface Material {
   id: string
+  source_author?: string | null
   is_favorite?: boolean
   original_filename: string
   content_type: string
@@ -36,6 +37,7 @@ export interface QuizQuestion {
   answers: QuizAnswer[]
 }
 export interface Quiz {
+  title?: string | null
   id: string
   material_id: string
   status: 'processing' | 'done' | 'failed'
@@ -51,6 +53,7 @@ export interface SubmittedAnswer {
   selected_ids: string[]
 }
 export interface QuizResult {
+  duration_ms?: number | null
   attempt_id?: string | null
   score: number
   total: number
@@ -75,6 +78,7 @@ export function formatSize(bytes: number) {
 }
 
 export interface QuizAttemptSummary {
+  duration_ms?: number | null
   id: string
   quiz_id: string | null
   created_at: string
@@ -90,4 +94,9 @@ export interface QuizAttemptDetail extends QuizAttemptSummary {
   quiz: Quiz
   answers: SubmittedAnswer[]
   result: QuizResult
+}
+
+export function formatTrainingTime(milliseconds: number) {
+  const ms = Math.max(0, Math.floor(milliseconds))
+  return `${String(Math.floor(ms / 60000)).padStart(2, '0')}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`
 }
