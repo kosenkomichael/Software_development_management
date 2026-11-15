@@ -1,4 +1,4 @@
-.PHONY: up down run migrate lint test
+.PHONY: up down run migrate lint security test
 
 up:
 	docker compose up -d postgres redis minio
@@ -17,6 +17,10 @@ makemigrations:
 
 lint:
 	ruff check . && mypy app
+	$(MAKE) security
+
+security:
+	bandit -r app alembic
 
 test:
 	pytest -v --cov=app --cov-report=term-missing

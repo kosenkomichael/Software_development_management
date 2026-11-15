@@ -31,6 +31,7 @@ defineEmits<{ open: []; quiz: []; details: [] }>()
       </button>
     </div>
     <p class="text-3 muted">
+      <Heart v-if="material.is_favorite" :size="16" class="accent" aria-label="В избранном" />
       {{ author || `${formatSize(material.size_bytes)} · ${materialStatusLabel[material.status]}` }}
     </p>
     <div class="study-card__actions">

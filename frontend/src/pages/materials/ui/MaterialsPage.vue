@@ -5,9 +5,12 @@ import { FilePlus, LayoutGrid, List, RefreshCw } from 'lucide-vue-next'
 import { useMaterialLibraryStore } from '@/features/material-library'
 import { StudyMaterialCard, materialStatusLabel, type Material } from '@/entities/material'
 import { BaseButton } from '@/shared/ui/button'
+import { MaterialActions } from '@/features/manage-material'
 import { BaseModal } from '@/shared/ui/modal'
 import { designAssets } from '@/shared/assets'
+const props = withDefaults(defineProps<{ favoritesOnly?: boolean }>(), { favoritesOnly: false })
 const router = useRouter()
+const sourceItems = computed(() => library.items.filter((item) => !props.favoritesOnly || item.is_favorite))
 const library = useMaterialLibraryStore()
 const filter = ref('all')
 const order = ref('new')
@@ -19,16 +22,16 @@ function openSelected() {
   selected.value = null
 }
 const filters = computed(() => [
-  { id: 'all', label: 'Все', count: library.total },
+  { id: 'all', label: 'Все', count: sourceItems.value.length },
   {
     id: 'notes',
     label: 'Конспекты',
-    count: library.items.filter((item) => item.status === 'done').length,
+    count: sourceItems.value.filter((item) => item.status === 'done').length,
   },
-  { id: 'quiz', label: 'Тесты', count: Object.values(library.quizReady).filter(Boolean).length },
+  { id: 'quiz', label: 'Тесты', count: sourceItems.value.filter((item) => library.quizReady[item.id]).length },
 ])
 const visible = computed(() =>
-  library.items
+  sourceItems.value
     .filter((item) =>
       filter.value === 'notes'
         ? item.status === 'done'
@@ -60,14 +63,14 @@ function open(item: Material, tab?: string) {
   <div class="workspace-page materials-page">
     <header class="materials-page__header">
       <div class="page-heading">
-        <h1 class="title-1">Мои материалы</h1>
-        <p class="text-1 muted">Все загруженные лекции, конспекты и тесты в одном месте</p>
+        <h1 class="title-1">{{ favoritesOnly ? 'Избранное' : 'Мои материалы' }}</h1>
+        <p class="text-1 muted">{{ favoritesOnly ? 'Материалы, которые вы добавили в избранное' : 'Все загруженные лекции, конспекты и тесты в одном месте' }}</p>
       </div>
       <div
         class="materials-page__quantity"
         :style="{ backgroundImage: `url(${designAssets.quotaTrack})` }"
       >
-        <strong class="text-2">{{ library.total }}</strong
+        <strong class="text-2">{{ sourceItems.length }}</strong
         ><span class="text-4 muted">Материалов</span>
       </div>
     </header>
@@ -130,14 +133,14 @@ function open(item: Material, tab?: string) {
       <h2 class="title-4">
         {{
           filter === 'all'
-            ? 'Здесь будут ваши материалы'
+            ? favoritesOnly ? 'В избранном пока пусто' : 'Здесь будут ваши материалы'
             : 'Таких материалов пока нет'
         }}
       </h2>
       <p class="text-3 muted">
-        Загрузите первую лекцию, чтобы получить конспект и проверить знания.
+        {{ favoritesOnly ? 'Нажмите «В избранное» в меню нужного материала.' : 'Загрузите первую лекцию, чтобы получить конспект и проверить знания.' }}
       </p>
-      <BaseButton @click="router.push('/materials/new')">Добавить материал</BaseButton>
+      <BaseButton @click="router.push(favoritesOnly ? '/materials' : '/materials/new')">{{ favoritesOnly ? 'Мои материалы' : 'Добавить материал' }}</BaseButton>
     </div>
     <div
       v-else
@@ -160,7 +163,7 @@ function open(item: Material, tab?: string) {
           {{ materialStatusLabel[selected.status] }} ·
           {{ new Date(selected.created_at).toLocaleDateString('ru-RU') }}
         </p>
-        <p class="text-3 muted">Переименование, удаление и избранное станут доступны позже.</p>
+        <MaterialActions :key="selected.id" :material="selected" @updated="library.upsert($event); selected = $event" @deleted="library.remove(selected!.id); selected = null" />
         <BaseButton @click="openSelected">Открыть материал</BaseButton>
       </div></BaseModal
     >
@@ -228,7 +231,18 @@ function open(item: Material, tab?: string) {
 }
 .materials-page__controls select {
   width: 220px;
-  background: var(--color-panel);
+  appearance: none;
+  padding-right: 48px;
+  background-color: var(--color-panel);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  color-scheme: dark;
+  cursor: pointer;
+}
+.materials-page__controls select:focus-visible {
+  outline: none;
+  border-color: var(--color-yellow);
 }
 .materials-page__views {
   gap: 0;

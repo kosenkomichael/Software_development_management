@@ -12,7 +12,7 @@ function uploaded(material: Material) {
   <div class="workspace-page create-material-page">
     <header class="page-heading">
       <h1 class="title-2">Создать материал</h1>
-      <p class="text-2 muted">Загрузите лекцию, чтобы получить конспект и тест</p>
+      <p class="text-2 muted">Загрузите лекцию, чтобы получить конспект. Тест можно создать позже по кнопке.</p>
     </header>
     <MaterialProgress :step="1" compact />
     <UploadMaterial @uploaded="uploaded" />

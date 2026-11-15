@@ -9,11 +9,10 @@ import { useMaterialLibraryStore } from '@/features/material-library'
 import {
   createMaterialApi,
   type Material,
-  type NoteStatus,
-  type QuizStatus,
 } from '@/entities/material'
 import { useSessionStore } from '@/entities/session'
 import { BaseButton } from '@/shared/ui/button'
+import { GenerationWait, clearGenerationWait } from '@/shared/ui/generation-wait'
 import { demoAnswers, demoNote, demoQuiz } from '../model/demo'
 const route = useRoute()
 const router = useRouter()
@@ -23,21 +22,15 @@ const api = createMaterialApi(session.request)
 const demo = computed(() => route.name === 'demo')
 const creating = computed(() => route.meta.creatingMaterial === true)
 const material = ref<Material | null>(null)
-const notesStatus = ref<NoteStatus | null>(null)
-const quizStatus = ref<QuizStatus | null>(null)
-const quizFailed = ref(false)
 const content = ref('')
 const loading = ref(true)
 const working = ref(false)
 const error = ref('')
-const resultReady = computed(
-  () =>
-    !!content.value &&
-    (!creating.value || (!!quizStatus.value?.quiz_id && quizStatus.value.status === 'done'))
-)
-const processingTitle = computed(() =>
-  notesStatus.value?.status === 'done' ? 'Создаём тест по конспекту' : 'Готовим ваш конспект'
-)
+const waitKey = computed(() => `studyai.wait.material.${String(route.params.id)}`)
+const resultReady = computed(() => !!content.value.trim())
+watch(resultReady, (ready) => {
+  if (ready) clearGenerationWait(waitKey.value)
+})
 const tab = computed(() => (route.query.tab === 'quiz' ? 'quiz' : 'notes'))
 const quizVisited = ref(tab.value === 'quiz')
 watch(tab, (value) => {
@@ -46,7 +39,6 @@ watch(tab, (value) => {
 let controller = new AbortController()
 let timer: ReturnType<typeof setTimeout> | undefined
 let deadline = 0
-let generationRequested = false
 let pendingPoll: AbortSignal | null = null
 function schedule(signal: AbortSignal) {
   if (signal.aborted) return
@@ -66,13 +58,8 @@ async function load() {
       if (signal.aborted) return
       material.value = item
     }
-    const [notes, quiz] = await Promise.all([
-      api.notesStatus(id, signal),
-      api.quizStatus(id, signal),
-    ])
+    const notes = await api.notesStatus(id, signal)
     if (signal.aborted) return
-    notesStatus.value = notes
-    quizStatus.value = quiz
     material.value = { ...material.value!, status: notes.status }
     library.upsert(material.value)
     if (notes.status === 'failed') {
@@ -90,57 +77,12 @@ async function load() {
         throw new Error('Конспект пуст. Попробуйте запустить генерацию заново.')
       content.value = note.content
     }
-    if (!creating.value) return
-    if (quiz.status === 'failed') {
-      quizFailed.value = true
-      error.value = 'Конспект готов, но создать тест не удалось. Повторите создание теста.'
-      return
-    }
-    if (quiz.quiz_id && quiz.status === 'done') {
-      quizFailed.value = false
-      library.quizReady[id] = true
-      return
-    }
-    if (!quiz.quiz_id && !generationRequested) {
-      generationRequested = true
-      try {
-        const started = await api.generateQuiz(id, signal)
-        if (signal.aborted) return
-        quizStatus.value = started
-      } catch (reason) {
-        if (!signal.aborted) quizFailed.value = true
-        throw reason
-      }
-    }
-    schedule(signal)
   } catch (reason) {
     if (!signal.aborted)
       error.value = reason instanceof Error ? reason.message : 'Не удалось загрузить материал.'
   } finally {
     if (pendingPoll === signal) pendingPoll = null
     if (!signal.aborted) loading.value = false
-  }
-}
-async function retryQuiz() {
-  if (working.value || !material.value) return
-  working.value = true
-  const signal = controller.signal
-  error.value = ''
-  try {
-    const status = await api.quizStatus(material.value.id, signal)
-    if (signal.aborted) return
-    if (!status.quiz_id || status.status === 'failed') {
-      generationRequested = true
-      await api.generateQuiz(material.value.id, signal)
-      if (signal.aborted) return
-    }
-    quizFailed.value = false
-    refresh()
-  } catch (reason) {
-    if (!signal.aborted)
-      error.value = reason instanceof Error ? reason.message : 'Не удалось создать тест.'
-  } finally {
-    if (!signal.aborted) working.value = false
   }
 }
 function refresh() {
@@ -156,6 +98,7 @@ async function regenerate() {
   try {
     await api.regenerate(material.value.id)
     content.value = ''
+    clearGenerationWait(waitKey.value)
     refresh()
   } catch (reason) {
     error.value = reason instanceof Error ? reason.message : 'Не удалось запустить генерацию.'
@@ -173,10 +116,6 @@ watch(
     controller.abort()
     controller = new AbortController()
     material.value = null
-    notesStatus.value = null
-    quizStatus.value = null
-    quizFailed.value = false
-    generationRequested = false
     pendingPoll = null
     content.value = ''
     error.value = ''
@@ -206,7 +145,7 @@ onBeforeUnmount(() => {
         {{
           demo
             ? 'Конспект и тест на примере лекции о нейронных сетях'
-            : material?.original_filename || 'Загрузите лекцию, чтобы получить конспект и тест'
+            : material?.original_filename || 'Загрузите лекцию, чтобы получить конспект'
         }}
       </p>
     </header>
@@ -223,43 +162,20 @@ onBeforeUnmount(() => {
       ><BaseButton v-if="material?.status === 'failed'" :loading="working" @click="regenerate"
         >Повторить обработку</BaseButton
       >
-      <BaseButton v-if="creating && quizFailed" :loading="working" @click="retryQuiz"
-        >Повторить создание теста</BaseButton
-      >
     </div>
     <section v-if="loading && !resultReady" class="surface empty-state" role="status">
       <BookOpen :size="56" />
       <h2 class="title-4">Загружаем материал…</h2>
     </section>
-    <section v-else-if="!resultReady && !error" class="surface empty-state" role="status">
+    <section v-else-if="!resultReady && !error" class="surface empty-state" aria-labelledby="processing-title">
       <BookOpen :size="56" />
-      <h2 class="title-4">{{ processingTitle }}</h2>
-      <p class="text-2 muted">
-        {{
-          notesStatus?.status === 'done'
-            ? 'Конспект готов. Формируем вопросы и варианты ответов.'
-            : 'Извлекаем текст и выделяем главное. Затем автоматически создадим тест.'
-        }}
-      </p>
-      <p class="text-3 muted">
-        Статусы обновляются автоматически. Оставайтесь на этой странице до готовности.
-      </p>
-      <div class="material-page__statuses text-3">
-        <span :class="{ accent: notesStatus?.status === 'done' }"
-          >Конспект: {{ notesStatus?.status === 'done' ? 'готов' : 'обрабатывается' }}</span
-        ><span :class="{ accent: quizStatus?.status === 'done' && quizStatus?.quiz_id }"
-          >Тест:
-          {{
-            quizStatus?.status === 'done' && quizStatus?.quiz_id
-              ? 'готов'
-              : notesStatus?.status === 'done'
-                ? 'создаётся'
-                : 'ожидает конспект'
-          }}</span
-        >
-      </div>
+      <h2 id="processing-title" class="title-4" role="status">Готовим ваш конспект</h2>
+      <p class="text-2 muted">Извлекаем текст и выделяем главное. Тест можно будет создать отдельно.</p>
+      <p class="text-3 muted">Можно закрыть страницу и вернуться к материалу позже.</p>
+      <GenerationWait :storage-key="waitKey" />
     </section>
     <template v-if="resultReady">
+      <p v-if="!demo && tab === 'notes'" class="notice text-3">Конспект готов. Если захотите проверить знания, откройте вкладку «Тест» и нажмите «Создать тест».</p>
       <div class="material-page__toolbar">
         <div class="material-page__tabs" aria-label="Содержимое материала">
           <button
@@ -315,12 +231,6 @@ onBeforeUnmount(() => {
   </div>
 </template>
 <style scoped>
-.material-page__statuses {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 24px;
-}
 .material-page__toolbar,
 .material-page__tabs,
 .material-page__tools {

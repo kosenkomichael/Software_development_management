@@ -1,12 +1,14 @@
 import random
 import re
 import uuid
+from datetime import UTC, datetime
 from typing import Annotated
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 from minio.error import S3Error
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import CurrentUser
@@ -14,21 +16,25 @@ from app.core.jwt import create_download_token, decode_download_token
 from app.db.session import get_session
 from app.models.material import Material, MaterialStatus
 from app.models.quiz import QuizStatus
-from app.repositories.material_repository import MaterialRepository
+from app.models.quiz_attempt import QuizAttempt
 from app.repositories.material_image_repository import MaterialImageRepository
+from app.repositories.material_repository import MaterialRepository
 from app.repositories.note_repository import NoteRepository
 from app.repositories.quiz_repository import QuizRepository
-from app.schemas.material import MaterialListResponse, MaterialResponse
+from app.schemas.material import MaterialListResponse, MaterialResponse, MaterialUpdateRequest
 from app.schemas.note import NoteResponse, NoteStatusResponse
 from app.schemas.quiz import (
     AnswerResponse,
+    AttemptDetail,
+    AttemptListResponse,
+    AttemptSummary,
     QuestionResponse,
-    QuestionResult,
     QuizResponse,
     QuizStatusResponse,
     SubmitRequest,
     SubmitResponse,
 )
+from app.services.quiz_grading import grade_quiz
 from app.services.storage_service import StorageService
 
 router = APIRouter(prefix="/materials", tags=["materials"])
@@ -45,6 +51,7 @@ def _to_material_response(material: Material, url: str | None = None) -> Materia
         status=material.status,
         created_at=material.created_at,
         download_url=url,
+        is_favorite=material.is_favorite,
     )
 
 
@@ -52,10 +59,11 @@ def _parse_uuid(value: str) -> uuid.UUID:
     try:
         return uuid.UUID(value)
     except ValueError:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail="Not found") from None
 
 
 # ─── Materials ────────────────────────────────────────────────────────────────
+
 
 @router.post("/upload", response_model=MaterialResponse, status_code=201)
 async def upload_material(
@@ -77,8 +85,11 @@ async def upload_material(
         )
 
     s3_key = await run_in_threadpool(
-        _storage.upload, data, str(current_user.id),
-        file.filename or "upload", file.content_type or "",
+        _storage.upload,
+        data,
+        str(current_user.id),
+        file.filename or "upload",
+        file.content_type or "",
     )
 
     material = Material(
@@ -94,6 +105,7 @@ async def upload_material(
 
     # Queue note generation after upload
     from app.workers.tasks import generate_notes_task
+
     generate_notes_task.delay(str(material.id))
 
     return _to_material_response(material)
@@ -126,6 +138,37 @@ async def get_material(
     token = create_download_token(str(current_user.id), str(material.id))
     url = f"/api/v1/materials/{material.id}/download?token={token}"
     return _to_material_response(material, url=url)
+
+
+@router.patch("/{material_id}", response_model=MaterialResponse)
+async def update_material(
+    material_id: str,
+    body: MaterialUpdateRequest,
+    current_user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> MaterialResponse:
+    material = await MaterialRepository(session).get_by_id(_parse_uuid(material_id))
+    if material is None or material.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Material not found")
+    if body.original_filename is not None:
+        material.original_filename = body.original_filename
+    if body.is_favorite is not None:
+        material.is_favorite = body.is_favorite
+    await session.commit()
+    return _to_material_response(material)
+
+
+@router.delete("/{material_id}", status_code=204)
+async def delete_material(
+    material_id: str,
+    current_user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> None:
+    material = await MaterialRepository(session).get_by_id(_parse_uuid(material_id))
+    if material is None or material.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Material not found")
+    material.deleted_at = datetime.now(UTC)
+    await session.commit()
 
 
 @router.get("/{material_id}/download")
@@ -162,6 +205,7 @@ async def download_material(
 
 
 # ─── Notes ────────────────────────────────────────────────────────────────────
+
 
 @router.get("/{material_id}/notes/status", response_model=NoteStatusResponse)
 async def notes_status(
@@ -229,12 +273,14 @@ async def regenerate_notes(
     await session.commit()
 
     from app.workers.tasks import generate_notes_task
+
     generate_notes_task.delay(str(mid))
 
     return NoteStatusResponse(material_id=material_id, status=MaterialStatus.uploaded, note_id=None)
 
 
 # ─── Quiz ─────────────────────────────────────────────────────────────────────
+
 
 @router.post("/{material_id}/quiz/generate", response_model=QuizStatusResponse, status_code=202)
 async def generate_quiz(
@@ -252,6 +298,7 @@ async def generate_quiz(
         raise HTTPException(status_code=409, detail="Generate notes first")
 
     from app.workers.tasks import generate_quiz_task
+
     generate_quiz_task.delay(str(mid))
 
     return QuizStatusResponse(material_id=material_id, status=QuizStatus.processing)
@@ -315,7 +362,9 @@ async def get_quiz(
             )
         )
     response.headers["Cache-Control"] = "no-store"
-    return QuizResponse(id=str(quiz.id), material_id=material_id, status=quiz.status, questions=questions)
+    return QuizResponse(
+        id=str(quiz.id), material_id=material_id, status=quiz.status, questions=questions
+    )
 
 
 @router.post("/{material_id}/quiz/submit", response_model=SubmitResponse)
@@ -330,45 +379,104 @@ async def submit_quiz(
     if material is None or material.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Material not found")
 
-    quizzes = await QuizRepository(session).list_by_material(mid)
-    if not quizzes or quizzes[0].status != QuizStatus.done:
-        raise HTTPException(status_code=409, detail="Quiz is not ready")
-
-    quiz = await QuizRepository(session).get_with_questions(quizzes[0].id)
-    if quiz is None:
+    repo = QuizRepository(session)
+    if body.quiz_id is not None:
+        quiz = await repo.get_with_questions(body.quiz_id)
+    else:
+        quizzes = await repo.list_by_material(mid)
+        quiz = await repo.get_with_questions(quizzes[0].id) if quizzes else None
+    if quiz is None or quiz.material_id != mid or quiz.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Quiz not found")
+    if quiz.status != QuizStatus.done:
+        raise HTTPException(status_code=409, detail="Quiz is not ready yet")
 
-    q_map = {str(q.id): q for q in quiz.questions}
-    results: list[QuestionResult] = []
-    correct_count = 0
+    result, snapshot = grade_quiz(quiz, body.answers)
+    attempt = QuizAttempt(
+        user_id=current_user.id,
+        material_id=mid,
+        quiz_id=quiz.id,
+        score=result.score,
+        total=result.total,
+        correct=result.correct,
+        quiz_snapshot=snapshot.model_dump(mode="json"),
+        answers=[answer.model_dump(mode="json") for answer in body.answers],
+        results=[item.model_dump(mode="json") for item in result.results],
+    )
+    session.add(attempt)
+    await session.commit()
+    result.attempt_id = str(attempt.id)
+    return result
 
-    for submitted in body.answers:
-        question = q_map.get(submitted.question_id)
-        if question is None:
-            continue
 
-        correct_ids = [str(a.id) for a in question.answers if a.is_correct]
-        is_correct = set(submitted.selected_ids) == set(correct_ids)
-        if is_correct:
-            correct_count += 1
+def _attempt_summary(attempt: QuizAttempt) -> AttemptSummary:
+    return AttemptSummary(
+        id=str(attempt.id),
+        quiz_id=str(attempt.quiz_id) if attempt.quiz_id else None,
+        created_at=attempt.created_at,
+        score=attempt.score,
+        total=attempt.total,
+        correct=attempt.correct,
+    )
 
-        explanation = next(
-            (a.explanation for a in question.answers if a.is_correct and a.explanation), None
+
+@router.get("/{material_id}/quiz/attempts", response_model=AttemptListResponse)
+async def list_quiz_attempts(
+    material_id: str,
+    current_user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    response: Response,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=50)] = 10,
+) -> AttemptListResponse:
+    mid = _parse_uuid(material_id)
+    material = await MaterialRepository(session).get_by_id(mid)
+    if material is None or material.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Material not found")
+    filters = (QuizAttempt.material_id == mid, QuizAttempt.user_id == current_user.id)
+    total = await session.scalar(select(func.count()).select_from(QuizAttempt).where(*filters))
+    rows = await session.scalars(
+        select(QuizAttempt)
+        .where(*filters)
+        .order_by(QuizAttempt.created_at.desc(), QuizAttempt.id.desc())
+        .limit(page_size)
+        .offset((page - 1) * page_size)
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return AttemptListResponse(items=[_attempt_summary(row) for row in rows], total=total or 0)
+
+
+@router.get("/{material_id}/quiz/attempts/{attempt_id}", response_model=AttemptDetail)
+async def get_quiz_attempt(
+    material_id: str,
+    attempt_id: str,
+    current_user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    response: Response,
+) -> AttemptDetail:
+    material = await MaterialRepository(session).get_by_id(_parse_uuid(material_id))
+    if material is None or material.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Material not found")
+    attempt = await session.scalar(
+        select(QuizAttempt).where(
+            QuizAttempt.id == _parse_uuid(attempt_id),
+            QuizAttempt.material_id == _parse_uuid(material_id),
+            QuizAttempt.user_id == current_user.id,
         )
-        results.append(QuestionResult(
-            question_id=submitted.question_id,
-            is_correct=is_correct,
-            correct_ids=correct_ids,
-            explanation=explanation,
-        ))
-
-    score = round(correct_count / len(results), 2) if results else 0.0
-
-    return SubmitResponse(
-        score=score,
-        total=len(results),
-        correct=correct_count,
-        results=results,
+    )
+    if attempt is None:
+        raise HTTPException(status_code=404, detail="Attempt not found")
+    response.headers["Cache-Control"] = "no-store"
+    return AttemptDetail(
+        **_attempt_summary(attempt).model_dump(),
+        quiz=attempt.quiz_snapshot,
+        answers=attempt.answers,
+        result=SubmitResponse(
+            attempt_id=str(attempt.id),
+            score=attempt.score,
+            total=attempt.total,
+            correct=attempt.correct,
+            results=attempt.results,
+        ),
     )
 
 

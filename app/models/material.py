@@ -1,14 +1,15 @@
 import enum
 import uuid
+from datetime import datetime
 
-from sqlalchemy import Enum, ForeignKey
+from sqlalchemy import DateTime, Enum, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
-class MaterialStatus(str, enum.Enum):
+class MaterialStatus(enum.StrEnum):
     uploaded = "uploaded"
     processing = "processing"
     done = "done"
@@ -21,6 +22,9 @@ class Material(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    is_favorite: Mapped[bool] = mapped_column(default=False, server_default="false", nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     original_filename: Mapped[str] = mapped_column(nullable=False)
     s3_key: Mapped[str] = mapped_column(nullable=False)
     content_type: Mapped[str] = mapped_column(nullable=False)
@@ -31,6 +35,9 @@ class Material(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     note: Mapped["Note"] = relationship("Note", back_populates="material", uselist=False)  # noqa: F821
     images: Mapped[list["MaterialImage"]] = relationship(  # noqa: F821
-        "MaterialImage", back_populates="material", cascade="all, delete-orphan", order_by="MaterialImage.order"
+        "MaterialImage",
+        back_populates="material",
+        cascade="all, delete-orphan",
+        order_by="MaterialImage.order",
     )
     quizzes: Mapped[list["Quiz"]] = relationship("Quiz", back_populates="material")  # noqa: F821
