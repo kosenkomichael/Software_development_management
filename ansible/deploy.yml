@@ -56,3 +56,8 @@
         recreate: auto
         pull: always
         build: never
+
+    - name: Run alembic migrations
+      community.docker.docker_container_exec:
+        container: lectureai-api-1
+        command: alembic upgrade head
