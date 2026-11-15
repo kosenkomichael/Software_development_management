@@ -17,12 +17,17 @@ class QuizAttempt(UUIDPrimaryKeyMixin, Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE")
     )
-    material_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("materials.id", ondelete="CASCADE")
+    material_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("materials.id", ondelete="SET NULL"), nullable=True
     )
     quiz_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("quizzes.id", ondelete="SET NULL"), nullable=True
     )
+    is_public_attempt: Mapped[bool] = mapped_column(
+        default=False, server_default="false", index=True
+    )
+    run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), unique=True, nullable=True)
+    duration_ms: Mapped[int | None] = mapped_column(nullable=True)
     score: Mapped[float] = mapped_column(nullable=False)
     total: Mapped[int] = mapped_column(nullable=False)
     correct: Mapped[int] = mapped_column(nullable=False)

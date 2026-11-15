@@ -12,6 +12,7 @@ class MaterialResponse(BaseModel):
     size_bytes: int
     status: MaterialStatus
     created_at: datetime
+    source_author: str | None = None
     is_favorite: bool = False
     download_url: str | None = None
 

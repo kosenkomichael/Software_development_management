@@ -81,6 +81,21 @@ const router = createRouter({
           meta: { publicPreview: true, title: 'Пример результата' },
         },
         {
+          path: 'community/materials/:materialId', name: 'public-material',
+          component: () => import('@/pages/public-material/ui/PublicMaterialPage.vue'),
+          meta: { requiresAuth: true, title: 'Учебный материал' },
+        },
+        {
+          path: 'community/quizzes/:quizId', name: 'public-quiz',
+          component: () => import('@/pages/public-quiz/ui/PublicQuizPage.vue'),
+          meta: { requiresAuth: true, title: 'Публичный тест' },
+        },
+        {
+          path: 'community/attempts/:attemptId', name: 'public-attempt',
+          component: () => import('@/pages/public-quiz/ui/PublicQuizPage.vue'),
+          meta: { requiresAuth: true, title: 'Сохранённая попытка' },
+        },
+        {
           path: 'community',
           name: 'community',
           component: () => import('@/pages/collection').then((module) => module.CollectionPage),

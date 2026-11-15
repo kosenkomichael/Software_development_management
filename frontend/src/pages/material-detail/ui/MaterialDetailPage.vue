@@ -167,6 +167,7 @@ onBeforeUnmount(() => {
       </div>
       <MaterialActions v-if="material" :material="material" @updated="material = $event; library.upsert($event)" @deleted="library.remove(material!.id); router.push('/materials')" />
     </header>
+    <p v-if="material?.source_author" class="text-3 muted">Копия материала автора: {{ material.source_author }}</p>
     <nav class="material-detail__tabs" aria-label="Разделы материала">
       <button
         v-for="item in [
