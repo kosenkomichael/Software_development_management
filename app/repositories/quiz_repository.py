@@ -14,12 +14,18 @@ class QuizRepository(BaseRepository[Quiz]):
         result = await self.session.execute(
             select(Quiz)
             .where(Quiz.id == quiz_id)
-            .options(selectinload(Quiz.questions).selectinload(Quiz.questions.property.mapper.class_.answers))
+            .options(
+                selectinload(Quiz.questions).selectinload(
+                    Quiz.questions.property.mapper.class_.answers
+                )
+            )
         )
         return result.scalar_one_or_none()
 
     async def list_by_material(self, material_id: UUID) -> list[Quiz]:
         result = await self.session.execute(
-            select(Quiz).where(Quiz.material_id == material_id)
+            select(Quiz)
+            .where(Quiz.material_id == material_id)
+            .order_by(Quiz.created_at.desc(), Quiz.id.desc())
         )
         return list(result.scalars().all())

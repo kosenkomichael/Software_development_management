@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
+import { useSessionStore } from '@/entities/session'
 import { BaseModal } from '@/shared/ui/modal'
 import { BaseButton } from '@/shared/ui/button'
 const props = defineProps<{ open: boolean }>()
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{ close: []; changed: [] }>()
+const session = useSessionStore()
+function close() { if (!session.isPending) emit('close') }
 const form = reactive({ current: '', password: '', confirmation: '' })
 const error = ref('')
 watch(
@@ -22,11 +25,21 @@ function validate() {
   else if (form.password !== form.confirmation) error.value = 'Новые пароли не совпадают.'
   else error.value = ''
 }
+async function save() {
+  if (session.isPending) return
+  validate()
+  if (error.value) return
+  try {
+    await session.changePassword(form.current, form.password)
+    form.current = ''; form.password = ''; form.confirmation = ''
+    emit('changed')
+  } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось изменить пароль.' }
+}
 </script>
 <template>
-  <BaseModal :open="open" labelledby="password-title" @close="emit('close')"
-    ><form class="password-modal" @submit.prevent="validate">
-      <h2 id="password-title" class="title-3">Сброс пароля</h2>
+  <BaseModal :open="open" labelledby="password-title" @close="close"
+    ><form class="password-modal" @submit.prevent="save">
+      <h2 id="password-title" class="title-3">Смена пароля</h2>
       <label class="app-field text-2"
         >Введите старый пароль<input
           v-model="form.current"
@@ -35,6 +48,8 @@ function validate() {
           type="password"
           autocomplete="current-password"
           required
+          maxlength="128"
+          :disabled="session.isPending"
           @blur="form.current && validate()" /></label
       ><label class="app-field text-2"
         >Введите новый пароль<input
@@ -43,6 +58,8 @@ function validate() {
           type="password"
           autocomplete="new-password"
           required
+          maxlength="128"
+          :disabled="session.isPending"
           @blur="form.password && validate()" /></label
       ><label class="app-field text-2"
         >Повторите новый пароль<input
@@ -51,13 +68,15 @@ function validate() {
           type="password"
           autocomplete="new-password"
           required
+          maxlength="128"
+          :disabled="session.isPending"
           @blur="form.confirmation && validate()"
       /></label>
       <p v-if="error" class="text-3 danger" role="alert">{{ error }}</p>
-      <p class="notice text-3">Смена пароля пока недоступна.</p>
+      <p class="notice text-3">После смены пароля другие устройства выйдут из аккаунта.</p>
       <div class="password-modal__actions">
-        <BaseButton variant="transparent" @click="emit('close')">Отмена</BaseButton
-        ><BaseButton type="submit" disabled title="Смена пароля пока недоступна"
+        <BaseButton variant="transparent" :disabled="session.isPending" @click="close">Отмена</BaseButton
+        ><BaseButton type="submit" :loading="session.isPending"
           >Сохранить</BaseButton
         >
       </div>

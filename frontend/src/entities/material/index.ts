@@ -1,3 +1,5 @@
 export * from './model/types'
 export { createMaterialApi } from './api/material-api'
 export { default as StudyMaterialCard } from './ui/StudyMaterialCard.vue'
+export { createPublicQuizApi, type PublicQuizItem, type PublicAttemptItem } from './api/public-quiz-api'
+export { createPublicMaterialApi, type PublicMaterialItem, type PublicMaterialDetail, type SharingGroup, type Visibility, type PublicationState } from './api/public-material-api'

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowRight, BarChart2, BookOpen, CheckSquare, LogOut, Pencil } from 'lucide-vue-next'
+import { LearningActivity } from '@/features/learning-activity'
 import { ProfileEditor } from '@/features/edit-profile'
 import { useMaterialLibraryStore } from '@/features/material-library'
 import { useSessionStore } from '@/entities/session'
@@ -12,11 +13,28 @@ const session = useSessionStore()
 const library = useMaterialLibraryStore()
 const router = useRouter()
 const editing = ref(false)
+const stats = ref<{ materials_count: number; attempts_count: number; average_score: number | null } | null>(null)
+const statsError = ref('')
+const statsLoading = ref(false)
+const controller = new AbortController()
+async function loadStats() {
+  if (statsLoading.value) return
+  statsLoading.value = true
+  statsError.value = ''
+  try {
+    const data = await session.request<NonNullable<typeof stats.value>>('/auth/me/stats', { signal: controller.signal })
+    if (!controller.signal.aborted) stats.value = data
+  } catch (reason) {
+    if (!controller.signal.aborted) statsError.value = reason instanceof Error ? reason.message : 'Не удалось загрузить статистику.'
+  } finally { if (!controller.signal.aborted) statsLoading.value = false }
+}
+onBeforeUnmount(() => controller.abort())
 const username = computed(() => session.user?.first_name?.trim() || session.user?.email.split('@')[0] || 'Гость')
 const initial = computed(() => Array.from(username.value.trim())[0]?.toLocaleUpperCase('ru-RU') || 'Г')
 const recent = computed(() => library.items.slice(0, 3))
 onMounted(() => {
   void library.load()
+  void loadStats()
 })
 async function logout() {
   await session.logout()
@@ -52,13 +70,14 @@ async function logout() {
     <div v-if="library.error" class="notice text-3" role="alert">
       {{ library.error }} <button class="text-link" @click="library.load(true)">Повторить</button>
     </div>
-    <div class="account-page__stats">
+    <p v-if="statsError" class="notice text-3" role="alert">{{ statsError }} <button class="text-link" @click="loadStats">Повторить</button></p>
+    <div class="account-page__stats" :aria-busy="statsLoading">
       <article class="surface account-page__stat">
         <span class="account-page__stat-icon account-page__stat-icon--materials"
           ><BookOpen :size="55"
         /></span>
         <div>
-          <strong class="title-3">{{ library.loaded ? library.total : '—' }}</strong>
+          <strong class="title-3">{{ stats ? stats.materials_count : '…' }}</strong>
           <p class="text-1">Материалов</p>
           <p class="text-3 muted">в вашей библиотеке</p>
         </div>
@@ -68,9 +87,9 @@ async function logout() {
           ><CheckSquare :size="55"
         /></span>
         <div>
-          <strong class="title-3">—</strong>
+          <strong class="title-3">{{ stats ? stats.attempts_count : '…' }}</strong>
           <p class="text-1">Пройдено тестов</p>
-          <p class="text-3 muted">История пока недоступна</p>
+          <p class="text-3 muted">завершённых попыток</p>
         </div>
       </article>
       <article class="surface account-page__stat">
@@ -78,9 +97,9 @@ async function logout() {
           ><BarChart2 :size="55"
         /></span>
         <div>
-          <strong class="title-3">—</strong>
+          <strong class="title-3">{{ !stats ? '…' : stats.average_score === null ? 'Нет попыток' : `${Math.round(stats.average_score * 100)}%` }}</strong>
           <p class="text-1">Средний результат</p>
-          <p class="text-3 muted">Статистика появится позже</p>
+          <p class="text-3 muted">{{ stats?.attempts_count ? 'по всем завершённым попыткам' : 'пройдите первый тест' }}</p>
         </div>
       </article>
     </div>
@@ -128,20 +147,7 @@ async function logout() {
         <div class="account-page__track" aria-hidden="true" />
         <p class="text-4 muted">Информация о лимите появится позже.</p>
       </section>
-      <section class="surface account-page__activity">
-        <header class="section-heading">
-          <h2 class="title-4">Недавняя активность</h2>
-          <button
-            class="text-link text-4"
-            type="button"
-            disabled
-            title="История активности пока недоступна"
-          >
-            Смотреть все <ArrowRight :size="20" />
-          </button>
-        </header>
-        <p class="text-3 muted">История обучения пока недоступна.</p>
-      </section>
+      <LearningActivity />
     </div>
     <ProfileEditor :open="editing" @close="editing = false" />
   </div>

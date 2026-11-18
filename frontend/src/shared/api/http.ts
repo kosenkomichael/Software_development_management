@@ -35,11 +35,25 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   if (!response.ok) {
     const body = await response.json().catch(() => null)
     const messages: Record<string, string> = {
+      'Recovery account not found': 'Аккаунт с такой почтой не найден. Проверьте адрес или зарегистрируйтесь.',
+      'Invalid or expired reset link': 'Ссылка недействительна, уже использована или истекла. Запросите новое письмо.',
+      'Current password is incorrect': 'Текущий пароль указан неверно.',
+      'New password must differ': 'Новый пароль должен отличаться от текущего.',
       'Invalid credentials': 'Неверный email или пароль.',
       'Email already registered': 'Этот email уже зарегистрирован.',
       'Account is disabled': 'Аккаунт отключён.',
       'Material not found': 'Материал не найден или недоступен.',
       'Notes not ready yet': 'Конспект ещё не готов. Обновите статус немного позже.',
+      'Attempt not found': 'Попытка не найдена или недоступна.',
+      'Answer every question exactly once': 'Ответьте на каждый вопрос один раз.',
+      'Invalid answer selection': 'Проверьте выбранные варианты ответа.',
+      'Training session expired': 'Тренировка истекла или уже завершена. Обновите тест и начните снова.',
+      'Public material not found': 'Материал снят с публикации или недоступен.',
+      'Invalid material title': 'Введите название материала.',
+      'Material import failed': 'Не удалось скопировать файлы. Попробуйте сохранить материал ещё раз.',
+      'Public quiz not found': 'Тест снят с публикации или недоступен.',
+      'Invalid quiz title': 'Введите название теста.',
+      'Quiz does not match': 'Обновите тест и попробуйте снова.',
       'Quiz not found': 'Тест ещё не создан.',
       'Quiz is not ready yet': 'Тест ещё обрабатывается.',
       'Generate notes first': 'Сначала дождитесь готовности конспекта.',
@@ -51,9 +65,11 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     throw new ApiError(
       response.status,
       message ??
-        (response.status === 422
+        (response.status === 413
+          ? 'Файл слишком большой. Максимальный размер 50 МБ.'
+          : response.status === 422
           ? path.startsWith('/auth/')
-            ? 'Проверьте email и пароль. Пароль должен содержать от 8 до 128 символов.'
+            ? 'Проверьте данные. Пароль должен содержать от 8 до 128 символов.'
             : 'Проверьте введённые данные.'
           : response.status === 429
             ? 'Слишком много попыток. Повторите позже.'

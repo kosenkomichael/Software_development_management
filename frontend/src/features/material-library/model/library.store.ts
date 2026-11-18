@@ -66,7 +66,16 @@ export const useMaterialLibraryStore = defineStore('material-library', () => {
       )
     }
   }
+  function remove(id: string) {
+    version++
+    loading.value = false
+    items.value = items.value.filter((item) => item.id !== id)
+    total.value = items.value.length
+    delete quizReady.value[id]
+  }
   function upsert(item: Material) {
+    version++
+    loading.value = false
     const index = items.value.findIndex((current) => current.id === item.id)
     if (index === -1) {
       items.value.unshift(item)
@@ -86,5 +95,5 @@ export const useMaterialLibraryStore = defineStore('material-library', () => {
       error.value = ''
     }
   )
-  return { items, total, bytes, quizReady, loading, error, loaded, load, loadQuizStatuses, upsert }
+  return { items, total, bytes, quizReady, loading, error, loaded, load, loadQuizStatuses, upsert, remove }
 })
