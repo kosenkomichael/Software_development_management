@@ -29,7 +29,7 @@ const router = useRouter()
               Загрузить материал
 
               <template #icon-right>
-                <ArrowRight :size="20" />
+                <ArrowRight />
               </template>
             </BaseButton>
 
@@ -112,8 +112,8 @@ const router = useRouter()
 }
 
 .hero__actions :deep(.base-button__icon svg) {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
 }
 @media (max-width: 1400px) {
   .hero__actions {
@@ -142,6 +142,25 @@ const router = useRouter()
   }
 }
 @media (max-width: 768px) {
+  .generation-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .generation-flow__source {
+    width: 100%;
+  }
+
+  .generation-flow__connector {
+    display: none;
+  }
+
+  .generation-flow__results {
+    flex-direction: column;
+    gap: 24px;
+  }
+
   .hero {
     padding-top: calc(142px + 48px);
     min-height: 0;
@@ -150,9 +169,6 @@ const router = useRouter()
   }
   .hero::after {
     height: 120px;
-  }
-  .hero__title {
-    font-size: 36px;
   }
   .hero__description {
     margin-top: 24px;

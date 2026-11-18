@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { CircleUserRound } from 'lucide-vue-next'
+import { CircleUserRound, LogIn, LogOut, UserRoundPlus } from 'lucide-vue-next'
 import { useAuthModalStore } from '@/features/auth'
 import { useSessionStore } from '@/entities/session'
 
@@ -38,6 +38,7 @@ const session = useSessionStore()
             >Выйти</BaseButton
           >
         </template>
+
         <template v-else>
           <BaseButton
             variant="transparent"
@@ -50,17 +51,24 @@ const session = useSessionStore()
           </BaseButton>
 
           <BaseButton
+            class="header__mobile-action"
             variant="yellow"
             size="small"
+            aria-label="Зарегистрироваться"
             aria-haspopup="dialog"
             :disabled="session.isInitializing || session.isPending"
             @click="authModal.open('register')"
           >
             Зарегистрироваться
+
+            <template #icon-left>
+              <UserRoundPlus :size="22" aria-hidden="true" />
+            </template>
           </BaseButton>
         </template>
       </div>
     </div>
+
     <div v-if="session.sessionError" class="container header__status text-4" role="alert">
       <p>{{ session.sessionError }}</p>
       <button
@@ -118,12 +126,15 @@ const session = useSessionStore()
   gap: 20px;
   flex-shrink: 0;
 }
+
 .header__account {
   white-space: nowrap;
 }
+
 .header__account svg {
   flex-shrink: 0;
 }
+
 .header__status {
   display: flex;
   align-items: center;
@@ -132,6 +143,7 @@ const session = useSessionStore()
   padding-block: 8px;
   color: var(--color-yellow);
 }
+
 .header__status button {
   border: 0;
   background: transparent;
@@ -139,29 +151,56 @@ const session = useSessionStore()
   text-decoration: underline;
 }
 
+.header__mobile-action :deep(.base-button__icon) {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .header__container {
-    min-height: 90px;
-    gap: 16px;
-    flex-wrap: wrap;
-    padding-block: 16px;
-  }
-  .header__logo {
-    height: 38px;
-  }
-  .header__actions {
+    min-height: var(--header-height);
     gap: 12px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    padding-block: 12px;
   }
-  .header__actions :deep(.base-button) {
-    min-width: 0;
+
+  .header__logo {
+    height: 32px;
+  }
+
+  .header__actions {
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .header__actions :deep(.base-button.header__mobile-action) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 44px;
+
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
     min-height: 44px;
-    font-size: 14px;
-    padding-inline: 16px;
+    padding: 0;
+
+    border-radius: 14px;
   }
+
+  .header__mobile-action :deep(.base-button__label) {
+    display: none;
+  }
+
+  .header__mobile-action :deep(.base-button__icon) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .header__account {
     gap: 0;
   }
+
   .header__account span {
     display: none;
   }

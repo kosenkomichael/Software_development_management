@@ -75,14 +75,23 @@ const testItems = ['15 вопросов', 'Разные типы заданий'
   min-width: 0;
 }
 @media (max-width: 768px) {
+  .generation-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
   .generation-flow__source {
     width: 100%;
   }
+
   .generation-flow__connector {
     display: none;
   }
+
   .generation-flow__results {
     flex-direction: column;
+    gap: 24px;
   }
 }
 </style>
