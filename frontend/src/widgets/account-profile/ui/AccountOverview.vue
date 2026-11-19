@@ -28,8 +28,6 @@ onMounted(() => {
     <section class="surface account-overview__continue">
       <header class="section-heading">
         <h2 class="title-4">Продолжить обучение</h2>
-
-        <RouterLink class="text-link text-4" to="/materials"> Все материалы </RouterLink>
       </header>
 
       <p v-if="library.loading" class="text-3 muted" role="status">Загружаем библиотеку…</p>
@@ -170,6 +168,8 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .account-overview__continue {
+    min-height: 0;
+    gap: 12px;
     padding: 16px;
   }
 
