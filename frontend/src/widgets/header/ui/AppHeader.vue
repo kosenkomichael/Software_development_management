@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { CircleUserRound, LogIn, LogOut, UserRoundPlus } from 'lucide-vue-next'
+import { CircleUserRound, UserRoundPlus } from 'lucide-vue-next'
 import { useAuthModalStore } from '@/features/auth'
 import { useSessionStore } from '@/entities/session'
 
