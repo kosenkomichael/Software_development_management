@@ -6,20 +6,15 @@ import { MaterialProgress } from '@/widgets/material-progress'
 import { NoteReader } from '@/features/read-notes'
 import { QuizPanel } from '@/features/take-quiz'
 import { useMaterialLibraryStore } from '@/features/material-library'
-import {
-  createMaterialApi,
-  type Material,
-} from '@/entities/material'
+import { createMaterialApi, type Material } from '@/entities/material'
 import { useSessionStore } from '@/entities/session'
 import { BaseButton } from '@/shared/ui/button'
 import { GenerationWait, clearGenerationWait } from '@/shared/ui/generation-wait'
-import { demoAnswers, demoNote, demoQuiz } from '../model/demo'
 const route = useRoute()
 const router = useRouter()
 const session = useSessionStore()
 const library = useMaterialLibraryStore()
 const api = createMaterialApi(session.request)
-const demo = computed(() => route.name === 'demo')
 const creating = computed(() => route.meta.creatingMaterial === true)
 const material = ref<Material | null>(null)
 const content = ref('')
@@ -121,13 +116,8 @@ watch(
     error.value = ''
     loading.value = true
     quizVisited.value = tab.value === 'quiz'
-    if (demo.value) {
-      content.value = demoNote
-      loading.value = false
-    } else {
-      deadline = Date.now() + 10 * 60 * 1000
-      void load()
-    }
+    deadline = Date.now() + 10 * 60 * 1000
+    void load()
   },
   { immediate: true }
 )
@@ -140,20 +130,12 @@ onBeforeUnmount(() => {
 <template>
   <div class="workspace-page material-page">
     <header class="page-heading">
-      <h1 class="title-1">{{ demo ? 'Пример результата' : 'Создать материал' }}</h1>
+      <h1 class="title-1">Создать материал</h1>
       <p class="text-1 muted">
-        {{
-          demo
-            ? 'Конспект и тест на примере лекции о нейронных сетях'
-            : material?.original_filename || 'Загрузите лекцию, чтобы получить конспект'
-        }}
+        {{ material?.original_filename || 'Загрузите лекцию, чтобы получить конспект' }}
       </p>
     </header>
     <MaterialProgress :step="resultReady ? 3 : 2" :compact="creating" />
-    <p v-if="demo" class="notice text-3">
-      Это пример.
-      <RouterLink class="text-link" to="/materials/new">Загрузить свой материал</RouterLink>
-    </p>
     <div v-if="error" class="notice text-3" role="alert">
       <AlertCircle :size="24" />
       <p>{{ error }}</p>
@@ -167,15 +149,24 @@ onBeforeUnmount(() => {
       <BookOpen :size="56" />
       <h2 class="title-4">Загружаем материал…</h2>
     </section>
-    <section v-else-if="!resultReady && !error" class="surface empty-state" aria-labelledby="processing-title">
+    <section
+      v-else-if="!resultReady && !error"
+      class="surface empty-state"
+      aria-labelledby="processing-title"
+    >
       <BookOpen :size="56" />
       <h2 id="processing-title" class="title-4" role="status">Готовим ваш конспект</h2>
-      <p class="text-2 muted">Извлекаем текст и выделяем главное. Тест можно будет создать отдельно.</p>
+      <p class="text-2 muted">
+        Извлекаем текст и выделяем главное. Тест можно будет создать отдельно.
+      </p>
       <p class="text-3 muted">Можно закрыть страницу и вернуться к материалу позже.</p>
       <GenerationWait :storage-key="waitKey" />
     </section>
     <template v-if="resultReady">
-      <p v-if="!demo && tab === 'notes'" class="notice text-3">Конспект готов. Если захотите проверить знания, откройте вкладку «Тест» и нажмите «Создать тест».</p>
+      <p v-if="tab === 'notes'" class="notice text-3">
+        Конспект готов. Если захотите проверить знания, откройте вкладку «Тест» и нажмите «Создать
+        тест».
+      </p>
       <div class="material-page__toolbar">
         <div class="material-page__tabs" aria-label="Содержимое материала">
           <button
@@ -203,7 +194,6 @@ onBeforeUnmount(() => {
             rel="noopener noreferrer"
             ><Download :size="20" />Исходный файл</a
           ><button
-            v-if="!demo"
             class="icon-button"
             :disabled="working"
             aria-label="Сгенерировать конспект заново"
@@ -217,15 +207,13 @@ onBeforeUnmount(() => {
         v-show="tab === 'notes'"
         :content="content"
         :filename="material?.original_filename"
-        :material-id="demo ? undefined : String(route.params.id)"
+        :material-id="String(route.params.id)"
       />
       <QuizPanel
         v-if="quizVisited"
         v-show="tab === 'quiz'"
-        :key="String(route.params.id || 'demo')"
-        :material-id="demo ? 'demo' : String(route.params.id)"
-        :demo="demo ? demoQuiz : undefined"
-        :demo-answers="demo ? demoAnswers : undefined"
+        :key="String(route.params.id)"
+        :material-id="String(route.params.id)"
       />
     </template>
   </div>

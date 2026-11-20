@@ -55,11 +55,17 @@ function login() {
 
 @media (max-width: 768px) {
   .workspace-layout {
+    display: block;
+    width: 100%;
+    min-height: 100svh;
     padding: 12px;
-    gap: 12px;
   }
+
   .workspace-layout__content {
+    width: 100%;
+    min-width: 0;
     padding-top: 12px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
   }
 }
 </style>

@@ -47,7 +47,7 @@ defineProps<Props>()
       {{ buttonText }}
 
       <template #icon-right>
-        <ArrowRight :size="18" />
+        <ArrowRight />
       </template>
     </BaseButton>
   </article>
@@ -60,7 +60,7 @@ defineProps<Props>()
   min-width: 0;
   min-height: 357px;
   padding: 34px 32px 22px;
-  background-color: var(--color-glass);
+  background-color: #20212bca;
   border: 2px solid var(--color-glass-border);
   border-radius: 30px;
   backdrop-filter: blur(12px);
@@ -88,7 +88,7 @@ defineProps<Props>()
   background-color: var(--color-green);
 }
 .result-card--test .result-card__icon {
-  background-color: var(--color-orange);
+  background-color: #9e6752;
 }
 .result-card__title {
   font-size: var(--font-size-text-1);
@@ -124,8 +124,8 @@ defineProps<Props>()
   padding-inline: 16px;
 }
 .result-card__button :deep(.base-button__icon svg) {
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
 }
 .result-card .result-card__button:disabled {
   opacity: 1;

@@ -2,32 +2,52 @@
 import { BookOpen, ListChecks, Upload } from 'lucide-vue-next'
 
 const steps = [
-  { number: '01', title: 'Загрузите материал', description: 'PDF, DOCX, PPTX', icon: Upload },
+  {
+    number: '01',
+    title: 'Загрузите материал',
+    description: 'Добавьте лекцию или учебный материал в формате PDF, DOCX или PPTX',
+    icon: Upload,
+    type: 'upload',
+  },
   {
     number: '02',
     title: 'Получите конспект',
-    icon: BookOpen,
     description: 'Система выделит определения, основные тезисы и важные факты',
+    icon: BookOpen,
+    type: 'summary',
   },
   {
     number: '03',
     title: 'Проверьте знания',
-    icon: ListChecks,
     description: 'Пройдите автоматически созданный тест и посмотрите результаты',
+    icon: ListChecks,
+    type: 'test',
   },
 ]
 </script>
 
 <template>
-  <section id="how-it-works" class="how-it-works__how">
-    <h2 class="title-1">Как это работает?</h2>
+  <section id="how-it-works" class="how-it-works">
+    <h2 class="title-2">Как это работает?</h2>
+
     <div class="how-it-works__steps">
-      <article v-for="step in steps" :key="step.number" class="surface how-it-works__step">
-        <span class="how-it-works__step-icon"
-          ><component :is="step.icon" :size="50" aria-hidden="true"
-        /></span>
-        <div>
-          <p class="title-3 accent">{{ step.number }}</p>
+      <article
+        v-for="step in steps"
+        :key="step.number"
+        class="surface how-it-works__step"
+        :class="`how-it-works__step--${step.type}`"
+      >
+        <div class="how-it-works__header">
+          <span class="how-it-works__icon">
+            <component :is="step.icon" :size="40" :stroke-width="1.8" aria-hidden="true" />
+          </span>
+
+          <span class="title-3 accent">
+            {{ step.number }}
+          </span>
+        </div>
+
+        <div class="how-it-works__content">
           <h3 class="text-1">{{ step.title }}</h3>
           <p class="text-2 muted">{{ step.description }}</p>
         </div>
@@ -37,66 +57,92 @@ const steps = [
 </template>
 
 <style scoped>
-.how-it-works__how {
+.how-it-works {
   scroll-margin-top: calc(var(--header-height) + 32px);
 }
+
 .how-it-works__steps {
   display: flex;
   gap: 28px;
   margin-top: 40px;
 }
+
 .how-it-works__step {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 36px;
   flex: 1;
+  flex-direction: column;
+  gap: 32px;
+
   min-width: 0;
-  min-height: 263px;
-  padding: 28px 32px;
+  min-height: 260px;
+  padding: 32px;
+
   border-radius: var(--radius-panel);
 }
-.how-it-works__step > div {
-  flex: 1 1 160px;
-  min-width: 0;
-  max-width: 100%;
-  overflow-wrap: anywhere;
+
+.how-it-works__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 20px;
 }
-.how-it-works__step-icon {
+
+.how-it-works__icon {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 104px;
-  height: 104px;
-  border-radius: 50%;
-  background-color: color-mix(in srgb, var(--color-orange) 50%, var(--color-panel));
-  color: var(--color-text-primary);
+
+  width: 76px;
+  height: 76px;
+
+  border-radius: 20px;
+  background-color: var(--step-color);
+  color: var(--color-white);
 }
-.how-it-works__step h3 {
-  margin: 18px 0 14px;
+
+.how-it-works__step--upload {
+  --step-color: var(--color-blue);
 }
-.how-it-works__step .text-2 {
-  line-height: 1.25;
+
+.how-it-works__step--summary {
+  --step-color: var(--color-green);
 }
+
+.how-it-works__step--test {
+  --step-color: var(--color-orange);
+}
+
+.how-it-works__content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.how-it-works__content p {
+  line-height: 1.4;
+}
+
 @media (max-width: 1023px) {
   .how-it-works__steps {
     flex-direction: column;
   }
+
+  .how-it-works__step {
+    min-height: 0;
+  }
 }
+
 @media (max-width: 768px) {
   .how-it-works__step {
-    flex-direction: column;
-    gap: 16px;
-    min-height: 0;
-    padding: 20px;
+    gap: 24px;
+    padding: 24px;
   }
-  .how-it-works__step-icon {
-    width: 72px;
-    height: 72px;
-  }
-  .how-it-works__step > div {
-    flex-basis: auto;
+
+  .how-it-works__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
   }
 }
 </style>

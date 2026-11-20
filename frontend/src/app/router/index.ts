@@ -75,12 +75,6 @@ const router = createRouter({
           meta: { requiresAuth: true, materialDetail: true, title: 'Материал' },
         },
         {
-          path: 'demo',
-          name: 'demo',
-          component: () => import('@/pages/material').then((module) => module.MaterialPage),
-          meta: { publicPreview: true, title: 'Пример результата' },
-        },
-        {
           path: 'community/materials/:materialId', name: 'public-material',
           component: () => import('@/pages/public-material/ui/PublicMaterialPage.vue'),
           meta: { requiresAuth: true, title: 'Учебный материал' },

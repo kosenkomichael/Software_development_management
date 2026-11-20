@@ -32,7 +32,7 @@ defineProps<Props>()
   width: 100%;
   min-height: 128px;
   padding: 24px;
-  background-color: var(--color-glass);
+  background-color: #20212bca;
   border: 2px solid var(--color-glass-border);
   border-radius: 30px;
   backdrop-filter: blur(12px);

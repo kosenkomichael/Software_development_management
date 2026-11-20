@@ -8,22 +8,27 @@ import logo from '@/shared/assets/images/logo.svg'
 const session = useSessionStore()
 const route = useRoute()
 const compact = ref(false)
+
 const displayName = computed(
   () => session.user?.first_name?.trim() || session.user?.email.split('@')[0] || 'Гость'
 )
+
 const initial = computed(
   () => Array.from(displayName.value.trim())[0]?.toLocaleUpperCase('ru-RU') || 'Г'
 )
+
 const links = [
-  { to: '/materials', label: 'Мои материалы', icon: File },
-  { to: '/materials/new', label: 'Добавить материал', icon: FilePlus },
-  { to: '/community', label: 'Сообщество', icon: Users },
-  { to: '/favorites', label: 'Избранное', icon: Heart },
+  { to: '/materials', label: 'Мои материалы', mobileLabel: 'Материалы', icon: File },
+  { to: '/materials/new', label: 'Добавить материал', mobileLabel: 'Добавить', icon: FilePlus },
+  { to: '/community', label: 'Сообщество', mobileLabel: 'Сообщество', icon: Users },
+  { to: '/favorites', label: 'Избранное', mobileLabel: 'Избранное', icon: Heart },
 ]
+
 function isActive(path: string) {
   if (path === '/materials') return route.name === 'materials' || route.name === 'material'
   if (path === '/materials/new')
     return route.name === 'create-material' || route.name === 'material-processing'
+
   return route.path === path
 }
 </script>
@@ -35,6 +40,7 @@ function isActive(path: string) {
         <BookOpen v-if="compact" :size="30" aria-hidden="true" />
         <img v-else :src="logo" alt="StudyAI" />
       </RouterLink>
+
       <button
         class="icon-button sidebar__toggle"
         type="button"
@@ -47,6 +53,7 @@ function isActive(path: string) {
         <ArrowLeft :size="20" aria-hidden="true" />
       </button>
     </div>
+
     <nav id="sidebar-navigation" class="sidebar__nav" aria-label="Основное меню">
       <RouterLink
         v-for="link in links"
@@ -59,9 +66,17 @@ function isActive(path: string) {
         :class="{ 'sidebar__link--active': isActive(link.to) }"
       >
         <component :is="link.icon" :size="24" aria-hidden="true" />
-        <span v-if="!compact" class="sidebar__label">{{ link.label }}</span>
+
+        <span v-if="!compact" class="sidebar__label">
+          {{ link.label }}
+        </span>
+
+        <span class="sidebar__mobile-label">
+          {{ link.mobileLabel }}
+        </span>
       </RouterLink>
     </nav>
+
     <div class="sidebar__bottom">
       <RouterLink
         to="/account"
@@ -71,14 +86,20 @@ function isActive(path: string) {
         :aria-current="route.path === '/account' ? 'page' : undefined"
         :title="compact ? displayName : undefined"
       >
-        <span class="sidebar__avatar text-2" aria-hidden="true">{{ initial }}</span>
+        <span class="sidebar__avatar text-2" aria-hidden="true">
+          {{ initial }}
+        </span>
+
         <div v-if="!compact" class="sidebar__identity">
           <span class="text-2">{{ displayName }}</span>
-          <span class="text-4 muted">{{
-            session.isAuthenticated ? 'Студент' : 'Демонстрация'
-          }}</span>
+          <span class="text-4 muted">
+            {{ session.isAuthenticated ? 'Студент' : 'Демонстрация' }}
+          </span>
         </div>
+
         <ChevronRight v-if="!compact" class="sidebar__chevron" :size="20" aria-hidden="true" />
+
+        <span class="sidebar__mobile-label"> Профиль </span>
       </RouterLink>
     </div>
   </aside>
@@ -100,6 +121,7 @@ function isActive(path: string) {
     flex-basis var(--transition-default),
     padding var(--transition-default);
 }
+
 .sidebar__brand {
   display: flex;
   align-items: center;
@@ -108,6 +130,7 @@ function isActive(path: string) {
   min-height: 48px;
   margin-bottom: 40px;
 }
+
 .sidebar__logo {
   display: flex;
   align-items: center;
@@ -115,23 +138,28 @@ function isActive(path: string) {
   color: var(--color-yellow);
   text-decoration: none;
 }
+
 .sidebar__logo img {
   width: 168px;
   height: auto;
 }
+
 .sidebar__toggle {
   width: 36px;
   height: 36px;
 }
+
 .sidebar__toggle svg {
   transition: transform var(--transition-default);
 }
+
 .sidebar__nav {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 40px;
 }
+
 .sidebar__link {
   position: relative;
   isolation: isolate;
@@ -150,6 +178,7 @@ function isActive(path: string) {
     border-color var(--transition-default),
     box-shadow var(--transition-default);
 }
+
 .sidebar__link::before {
   content: '';
   position: absolute;
@@ -166,22 +195,31 @@ function isActive(path: string) {
   pointer-events: none;
   transition: opacity var(--transition-default);
 }
+
 .sidebar__link svg {
   flex-shrink: 0;
 }
+
 .sidebar__label {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.sidebar__mobile-label {
+  display: none;
+}
+
 .sidebar__link:hover,
 .sidebar__link:focus-visible {
   color: var(--color-yellow);
   border-color: color-mix(in srgb, var(--color-orange) 22%, transparent);
 }
+
 .sidebar__link:hover::before,
 .sidebar__link:focus-visible::before {
   opacity: 0.65;
 }
+
 .sidebar__link--active {
   color: var(--color-yellow);
   border-color: color-mix(in srgb, var(--color-orange) 25%, transparent);
@@ -189,21 +227,25 @@ function isActive(path: string) {
     inset 2px 0 0 var(--color-yellow),
     0 4px 18px color-mix(in srgb, var(--color-orange) 8%, transparent);
 }
+
 .sidebar__link--active::before,
 .sidebar__link--active:hover::before {
   opacity: 1;
 }
+
 .sidebar__bottom {
   margin-top: auto;
   padding-top: 24px;
   border-top: 1px solid var(--color-border-muted);
 }
+
 .sidebar__user {
   min-height: 76px;
   gap: 14px;
   padding: 12px;
   color: var(--color-text-primary);
 }
+
 .sidebar__avatar {
   display: flex;
   align-items: center;
@@ -216,6 +258,7 @@ function isActive(path: string) {
   color: var(--color-background);
   font-weight: var(--font-weight-semibold);
 }
+
 .sidebar__identity {
   display: flex;
   flex-direction: column;
@@ -223,36 +266,44 @@ function isActive(path: string) {
   min-width: 0;
   flex: 1;
 }
+
 .sidebar__identity span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .sidebar__chevron {
   color: var(--color-text-secondary);
 }
+
 .sidebar--compact {
   width: 92px;
   flex-basis: 92px;
   padding: 24px 16px 20px;
 }
+
 .sidebar--compact .sidebar__brand {
   flex-direction: column;
   gap: 16px;
   margin-bottom: 24px;
 }
+
 .sidebar--compact .sidebar__logo {
   justify-content: center;
   width: 56px;
   height: 44px;
 }
+
 .sidebar--compact .sidebar__toggle {
   width: 56px;
   height: 36px;
 }
+
 .sidebar--compact .sidebar__toggle svg {
   transform: rotate(180deg);
 }
+
 .sidebar--compact .sidebar__link {
   justify-content: center;
   width: 56px;
@@ -260,42 +311,149 @@ function isActive(path: string) {
   padding: 0;
   gap: 0;
 }
+
 .sidebar--compact .sidebar__bottom {
   padding-top: 20px;
 }
+
 .sidebar--compact .sidebar__user {
   min-height: 64px;
 }
+
 @media (max-width: 768px) {
-  .sidebar {
-    position: sticky;
-    top: 12px;
-    flex: 0 0 72px;
-    width: 72px;
-    padding: 16px 8px;
-    min-height: calc(100svh - 24px);
+  .sidebar,
+  .sidebar--compact {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    width: 100%;
+    height: auto;
+    min-height: 72px;
+    max-height: none;
+    flex: none;
+
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+
+    border-radius: 20px 20px 0 0;
+    border-bottom: 0;
+
+    background: var(--color-panel);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
   }
-  .sidebar__toggle {
+
+  .sidebar__brand,
+  .sidebar--compact .sidebar__brand {
     display: none;
   }
+
+  .sidebar__nav {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    flex: 4 1 0;
+    gap: 4px;
+
+    min-width: 0;
+    margin: 0;
+  }
+
+  .sidebar__link,
+  .sidebar--compact .sidebar__link {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+
+    width: auto;
+    min-width: 0;
+    min-height: 56px;
+
+    padding: 6px 2px;
+
+    border: 1px solid transparent;
+    border-radius: 12px;
+  }
+
+  .sidebar__link svg {
+    width: 22px;
+    height: 22px;
+  }
+
   .sidebar__label,
   .sidebar__identity,
   .sidebar__chevron {
     display: none;
   }
-  .sidebar__logo img {
-    width: 40px;
+
+  .sidebar__mobile-label {
+    display: block;
+    max-width: 100%;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 10px;
+    line-height: 1.2;
+    text-align: center;
   }
-  .sidebar__link {
-    justify-content: center;
-    gap: 0;
-    padding: 12px 0;
-    min-height: 52px;
+
+  .sidebar__link::before {
+    display: none;
   }
-  .sidebar__user {
+
+  .sidebar__link--active {
+    color: var(--color-yellow);
+    background: color-mix(in srgb, var(--color-orange) 18%, transparent);
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .sidebar__bottom,
+  .sidebar--compact .sidebar__bottom {
+    display: flex;
+    flex: 1 1 0;
+    align-items: center;
+
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+  }
+
+  .sidebar__user,
+  .sidebar--compact .sidebar__user {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
     justify-content: center;
+    gap: 5px;
+
+    width: 100%;
+    min-width: 0;
     min-height: 56px;
-    padding: 6px;
+    padding: 6px 2px;
+  }
+
+  .sidebar__avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+
+  .sidebar__user .sidebar__mobile-label {
+    display: block;
   }
 }
 </style>
