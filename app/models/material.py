@@ -39,6 +39,8 @@ class Material(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     is_public: Mapped[bool] = mapped_column(default=False, server_default="false", index=True)
+    visibility: Mapped[str] = mapped_column(default="public", server_default="public")
+    share_token: Mapped[str | None] = mapped_column(nullable=True)
     public_title: Mapped[str | None] = mapped_column(nullable=True)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     published_quiz_id: Mapped[uuid.UUID | None] = mapped_column(

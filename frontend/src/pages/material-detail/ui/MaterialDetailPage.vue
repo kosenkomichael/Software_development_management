@@ -283,10 +283,15 @@ onBeforeUnmount(() => {
   color: var(--color-text-secondary);
 }
 .material-detail__header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 24px;
   padding: 0 4px;
+}
+.material-detail__header > .material-actions {
+  grid-column: 1 / -1;
+  min-width: 0;
 }
 .material-detail__thumbnail {
   width: 104px;
@@ -417,7 +422,7 @@ onBeforeUnmount(() => {
 }
 @media (max-width: 768px) {
   .material-detail__header {
-    flex-wrap: wrap;
+    gap: 16px;
   }
   .material-detail__thumbnail {
     width: 72px;

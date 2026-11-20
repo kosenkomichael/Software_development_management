@@ -22,11 +22,12 @@ const importing = ref(false)
 const downloading = ref(false)
 const error = ref('')
 let controller = new AbortController()
-watch(() => String(route.params.materialId), async (id) => {
+watch(() => [String(route.params.materialId), route.hash] as const, async ([id, hash], previous) => {
+  if (material.value?.id === id && !hash && previous?.[1]) return
   controller.abort(); controller = new AbortController()
   const signal = controller.signal
   rankingRevision.value = 0; material.value = null; tab.value = 'notes'; quizVisited.value = false; error.value = ''; loading.value = true
-  try { const data = await api.get(id, signal); if (!signal.aborted) material.value = data }
+  try { const share = new URLSearchParams(hash.slice(1)).get('share') || undefined; const data = await api.get(id, signal, share); if (!signal.aborted) { material.value = data; if (share) void router.replace({ hash: '' }) } }
   catch (reason) { if (!signal.aborted) error.value = reason instanceof Error ? reason.message : 'Не удалось загрузить материал.' }
   finally { if (!signal.aborted) loading.value = false }
 }, { immediate: true })
@@ -65,6 +66,7 @@ onBeforeUnmount(() => controller.abort())
     <p v-if="loading" class="text-3 muted" role="status">Загружаем материал…</p>
     <p v-if="error" class="notice text-3 danger" role="alert">{{ error }}</p>
     <template v-if="material">
+      <p v-if="material.visibility !== 'public'" class="text-3 muted">{{ material.visibility === 'groups' ? 'Доступ для выбранных групп' : 'Доступ по ссылке' }}</p>
       <header class="page-heading"><h1 class="title-3">{{ material.title }}</h1><p class="text-3 muted">Автор: {{ material.author }} · {{ formatSize(material.size_bytes) }}</p></header>
       <div class="public-material__actions">
         <BaseButton :loading="importing" @click="save">Сохранить в мою библиотеку</BaseButton>
