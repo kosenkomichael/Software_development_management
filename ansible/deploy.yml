@@ -52,6 +52,7 @@
         files:
           - docker-compose.yml
           - docker-compose.prod.yml
+        profiles: "{{ compose_profiles.split(',') | map('trim') | reject('equalto','') | list }}"
         state: present
         recreate: auto
         pull: always
