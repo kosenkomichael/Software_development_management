@@ -13,6 +13,11 @@ on:
         required: true
         default: "latest"
         type: string
+      compose_profiles:
+        description: "Профили compose (через запятую), напр. monitoring"
+        required: false
+        default: "monitoring,mail"
+        type: string
 
 permissions:
   contents: read
