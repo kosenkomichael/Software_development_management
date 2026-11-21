@@ -35,6 +35,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-${MINIO_ACCESS_KEY}}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-${MINIO_SECRET_KEY}}
+      MINIO_PROMETHEUS_AUTH_TYPE: "public"
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -90,7 +91,66 @@ services:
       - api
     restart: unless-stopped
 
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    profiles: ["monitoring"]
+    environment:
+      DATA_SOURCE_URI: "postgres:5432/${POSTGRES_DB}?sslmode=disable"
+      DATA_SOURCE_USER: ${POSTGRES_USER}
+      DATA_SOURCE_PASS: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.75.0
+    profiles: ["monitoring"]
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: ["monitoring"]
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    depends_on:
+      - postgres-exporter
+      - redis-exporter
+      - minio
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12.1.0
+    profiles: ["monitoring"]
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
   minio_data:
+  prometheus_data:
+  grafana_data:

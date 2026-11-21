@@ -1,0 +1,160 @@
+{
+  "uid": "minio",
+  "title": "MinIO Monitoring",
+  "tags": ["minio", "storage", "monitoring"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "MinIO Availability",
+      "type": "stat",
+      "gridPos": {"h": 5, "w": 12, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "up{job=\"minio\"}",
+          "legendFormat": "MinIO",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "green", "value": 1}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Total Storage Used",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "minio_cluster_capacity_usable_total_bytes - minio_cluster_capacity_usable_free_bytes",
+          "legendFormat": "Used Storage",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "bytes"},
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "title": "Available Storage",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "minio_cluster_capacity_usable_free_bytes",
+          "legendFormat": "Free Storage",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "bytes"},
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "title": "S3 Requests per Second",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "sum(rate(minio_s3_requests_total[5m]))",
+          "legendFormat": "Requests/sec",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "ops"},
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "title": "S3 Request Errors",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "sum(rate(minio_s3_requests_errors_total[5m]))",
+          "legendFormat": "Errors/sec",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "ops"},
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "title": "Network Received",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "sum(rate(minio_node_traffic_received_bytes[5m]))",
+          "legendFormat": "Received",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "Bps"},
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "title": "Network Sent",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "sum(rate(minio_node_traffic_sent_bytes[5m]))",
+          "legendFormat": "Sent",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "Bps"},
+        "overrides": []
+      }
+    }
+  ]
+}
