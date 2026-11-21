@@ -65,4 +65,5 @@ jobs:
         run: |
           ansible-playbook -i inventory.yml deploy.yml \
             -e "app_ref=${{ inputs.app_ref }}" \
-            -e "image_tag=${{ inputs.image_tag }}"
+            -e "image_tag=${{ inputs.image_tag }}" \
+            -e "compose_profiles=${{ inputs.compose_profiles }}"
