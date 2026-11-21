@@ -1,0 +1,7 @@
+✅ DEPLOYMENT SUCCESSFUL
+
+Application has been deployed successfully.
+
+🌍 Target environment: $ENVIRONMENT
+🐳 Deployed image: $IMAGE_TAG
+🧩 Compose profiles: $COMPOSE_PROFILES

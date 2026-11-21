@@ -27,6 +27,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  notify-start:
+    uses: ./.github/workflows/telegram-notify.yml
+    with:
+      template: deploy-start.txt
+      workflow_name: Deploy
+      app_ref: ${{ inputs.app_ref }}
+      image_tag: ${{ inputs.image_tag }}
+      compose_profiles: ${{ inputs.compose_profiles }}
+      environment_name: sbshinobi
+    secrets:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -67,3 +80,27 @@ jobs:
             -e "app_ref=${{ inputs.app_ref }}" \
             -e "image_tag=${{ inputs.image_tag }}" \
             -e "compose_profiles=${{ inputs.compose_profiles }}"
+
+  notify-completion:
+    needs:
+      - deploy
+
+    if: always()
+
+    uses: ./.github/workflows/telegram-notify.yml
+
+    with:
+      template: >-
+        ${{ needs.deploy.result == 'success' && 'deploy-success.txt' ||
+            needs.deploy.result == 'cancelled' && 'deploy-cancelled.txt' ||
+            'deploy-failure.txt' }}
+
+      workflow_name: Deploy
+      app_ref: ${{ inputs.app_ref }}
+      image_tag: ${{ inputs.image_tag }}
+      compose_profiles: ${{ inputs.compose_profiles }}
+      environment_name: sbshinobi
+
+    secrets:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

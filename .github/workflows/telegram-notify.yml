@@ -1,0 +1,103 @@
+name: Telegram notification
+
+on:
+  workflow_call:
+    inputs:
+      template:
+        description: Message template filename
+        required: true
+        type: string
+
+      workflow_name:
+        description: Name of the calling workflow
+        required: true
+        type: string
+
+      app_ref:
+        description: Application Git ref
+        required: false
+        type: string
+        default: "—"
+
+      image_tag:
+        description: Docker image tag
+        required: false
+        type: string
+        default: "—"
+
+      app_sha:
+        description: Application commit SHA
+        required: false
+        type: string
+        default: "—"
+
+      compose_profiles:
+        description: Docker Compose profiles
+        required: false
+        type: string
+        default: "—"
+
+      environment_name:
+        description: GitHub Environment name
+        required: false
+        type: string
+        default: "—"
+
+    secrets:
+      TELEGRAM_BOT_TOKEN:
+        required: true
+      TELEGRAM_CHAT_ID:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install gettext
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base
+
+      - name: Render Telegram message
+        id: render
+        shell: bash
+        env:
+          TEMPLATE: ${{ inputs.template }}
+
+          REPOSITORY: ${{ github.repository }}
+          WORKFLOW: ${{ inputs.workflow_name }}
+          ENVIRONMENT: ${{ inputs.environment_name }}
+
+          BRANCH: ${{ github.ref_name }}
+          APP_REF: ${{ inputs.app_ref }}
+
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          APP_SHA: ${{ inputs.app_sha }}
+
+          COMPOSE_PROFILES: ${{ inputs.compose_profiles }}
+
+          ACTOR: ${{ github.actor }}
+          EVENT: ${{ github.event_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          SHA: ${{ github.sha }}
+        run: |
+          export TIMESTAMP="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          bash .github/telegram/scripts/render-message.sh
+
+      - name: Send Telegram notification
+        uses: appleboy/telegram-action@v1.1.2
+        continue-on-error: true
+        with:
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          message: ${{ steps.render.outputs.message }}

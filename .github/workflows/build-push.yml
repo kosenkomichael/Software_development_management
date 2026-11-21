@@ -13,6 +13,16 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  notify-start:
+    uses: ./.github/workflows/telegram-notify.yml
+    with:
+      template: build-start.txt
+      workflow_name: build-push
+      app_ref: ${{ inputs.app_ref }}
+    secrets:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
@@ -30,7 +40,9 @@ jobs:
 
       - name: Set short SHA
         id: vars
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: |
+          echo "sha_short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "app_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -65,3 +77,30 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ steps.vars.outputs.sha_short }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:latest
+
+    outputs:
+      image_tag: ${{ steps.vars.outputs.sha_short }}
+      app_sha: ${{ steps.vars.outputs.app_sha }}
+
+  notify-completion:
+    needs:
+      - build-and-push
+
+    if: always()
+
+    uses: ./.github/workflows/telegram-notify.yml
+
+    with:
+      template: >-
+        ${{ needs.build-and-push.result == 'success' && 'build-success.txt' ||
+            needs.build-and-push.result == 'cancelled' && 'build-cancelled.txt' ||
+            'build-failure.txt' }}
+
+      workflow_name: Build and Push
+      app_ref: ${{ inputs.app_ref }}
+      image_tag: ${{ needs.build-and-push.outputs.image_tag }}
+      app_sha: ${{ needs.build-and-push.outputs.app_sha }}
+
+    secrets:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

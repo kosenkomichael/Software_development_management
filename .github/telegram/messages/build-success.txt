@@ -1,0 +1,10 @@
+✅ BUILD SUCCESSFUL
+
+Docker images have been built and pushed successfully.
+
+📦 Published images:
+• api
+• worker
+• frontend
+
+🔖 Application SHA: $APP_SHA

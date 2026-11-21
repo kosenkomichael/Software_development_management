@@ -1,0 +1,14 @@
+📦 Repository: $REPOSITORY
+⚙️ Workflow: $WORKFLOW
+🌍 Environment: $ENVIRONMENT
+
+🌿 Branch: $BRANCH
+📌 Application ref: $APP_REF
+
+🐳 Docker image tag: $IMAGE_TAG
+
+👤 Triggered by: $ACTOR
+🔢 Run: #$RUN_NUMBER
+🆔 Run ID: $RUN_ID
+🔗 Run URL: $RUN_URL
+🕒 Time: $TIMESTAMP
